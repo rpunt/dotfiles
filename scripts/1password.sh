@@ -2,6 +2,15 @@
 
 # https://austincloud.guru/2018/11/1password-cli-tricks/
 
+alias oplogin='eval $(op signin puntfamily)'
+
+# function adminpassupdate() {
+#   password="${1}"
+#   # echo "$password" | od -c
+#   op get account 1>/dev/null 2>&1 || oplogin
+#   op edit item "ITEM NAME" password=$(echo "$password"|tr '\n' ' ')
+# }
+
 opon() {
   if [[ -z $OP_SESSION_puntfamily ]]; then
     eval $(op signin puntfamily)
@@ -14,21 +23,22 @@ opoff() {
 }
 
 getpwd() {
-  opon
+  op get account 1>/dev/null 2>&1 || oplogin
   op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value'
-  opoff
 }
 
-# evaluate these for further use
+#######
+### evaluate these for further use
+#
 #sshkey() {
-#  opon
+#  op get account 1>/dev/null 2>&1 || oplogin
 #  echo "$(op get item "acg-master" |jq -r '.details.notesPlain')"|ssh-add -
-#  opoff
 #}
+#
 #gittoken() {
-#  opon
+#  # opon
+#  op get account 1>/dev/null 2>&1 || oplogin
 #  export GIT_TOKEN=$(op get item "GitHub"|jq -r '.details.sections[] | select(.fields).fields[] | select(.t== "Personal Laptop").v')
-#  opoff
 #}
 
 getmfa() {
