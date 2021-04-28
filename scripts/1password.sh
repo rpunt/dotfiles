@@ -22,7 +22,7 @@ opoff() {
   unset OP_SESSION_puntfamily
 }
 
-getpwd() {
+getpassword() {
   op get account 1>/dev/null 2>&1 || oplogin
   op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value'
 }
