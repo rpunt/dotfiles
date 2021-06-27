@@ -2,7 +2,9 @@
 
 # https://austincloud.guru/2018/11/1password-cli-tricks/
 
-alias oplogin='eval $(op signin puntfamily)'
+oplogin() {
+  eval $(op signin puntfamily --session "$OP_SESSION_puntfamily")
+}
 
 # function adminpassupdate() {
 #   password="${1}"
@@ -11,19 +13,12 @@ alias oplogin='eval $(op signin puntfamily)'
 #   op edit item "ITEM NAME" password=$(echo "$password"|tr '\n' ' ')
 # }
 
-opon() {
-  if [[ -z $OP_SESSION_puntfamily ]]; then
-    eval $(op signin puntfamily)
-  fi
-}
-
-opoff() {
+oplogoff() {
   op signout
-  unset OP_SESSION_puntfamily
 }
 
 getpassword() {
-  op get account 1>/dev/null 2>&1 || oplogin
+  oplogin
   op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value'
 }
 
@@ -42,7 +37,6 @@ getpassword() {
 #}
 
 getmfa() {
-  opon
+  oplogin
   op get totp "$1"
-  opoff
 }
