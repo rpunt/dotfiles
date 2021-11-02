@@ -1,0 +1,5 @@
+alias ll="ls -l"
+alias be="bundle exec"
+alias kls="bundle exec kitchen list"
+alias krm="bundle exec kitchen destroy"
+alias kmk="bundle exec kitchen converge"
