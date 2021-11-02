@@ -1,39 +1,45 @@
 tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/core"
+tap "homebrew/services"
+brew "ansible"
+brew "ansible-lint"
 brew "autoconf"
 brew "automake"
-brew "openssl@1.1"
-brew "awscli"
+brew "bat"
 brew "coreutils"
 brew "docker"
+brew "duf"
+brew "dust"
 brew "gh"
+brew "go"
+brew "goreleaser"
 brew "htop"
 brew "jq"
 brew "libksba"
 brew "libtool"
-brew "libyaml"
+brew "marked"
 brew "mas"
 brew "nmap"
 brew "pkg-config"
-brew "pngcrush"
-brew "terminal-notifier"
-brew "yq"
+brew "shellcheck"
+brew "wget"
+brew "zlib"
 cask "1password-cli"
+cask "arduino"
+cask "iterm2"
+cask "nvalt"
+cask "postman"
 cask "powershell"
-cask "visual-studio-code"
-mas "Chronicle Pro", id: 1280542517
-mas "DaisyDisk", id: 411643860
-mas "Harvest", id: 506189836
+cask "sourcetree"
+mas "Chronicle", id: 572561420
+mas "GarageBand", id: 682658836
 mas "iMovie", id: 408981434
-mas "LanScan", id: 472226235
+mas "Keynote", id: 409183694
 mas "Magnet", id: 441258766
-mas "Marked 2", id: 890031187
-mas "Microsoft Remote Desktop", id: 1295203466
 mas "OmniFocus", id: 1346203938
-mas "OneDrive", id: 823766827
 mas "Pixelmator", id: 407963104
-mas "Reeder", id: 1449412482
-mas "Soulver", id: 413965349
+mas "Pixelmator Pro", id: 1289583905
+mas "Reeder", id: 1529448980
+mas "Soulver 2", id: 413965349
 mas "The Unarchiver", id: 425424353
-mas "Tweetbot", id: 1384080005
