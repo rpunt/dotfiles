@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# https://austincloud.guru/2018/11/1password-cli-tricks/
+# https://austincloud.guru/2018/11/27/1password-cli-tricks/
 
 oplogin() {
   eval $(op signin puntfamily --session "$OP_SESSION_puntfamily")
