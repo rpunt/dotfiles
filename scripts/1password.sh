@@ -3,7 +3,11 @@
 # https://austincloud.guru/2018/11/27/1password-cli-tricks/
 
 oplogin() {
-  eval $(op signin puntfamily --session "$OP_SESSION_puntfamily")
+  op get account 1>/dev/null 2>&1
+  retVal=$?
+  if [ $retVal -ne 0 ]; then
+    eval "$(op signin puntfamily)"
+  fi
 }
 
 # function adminpassupdate() {
