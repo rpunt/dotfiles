@@ -11,10 +11,9 @@ oplogin() {
 }
 
 # function adminpassupdate() {
-#   password="${1}"
-#   # echo "$password" | od -c
-#   op get account 1>/dev/null 2>&1 || oplogin
-#   op edit item "ITEM NAME" password=$(echo "$password"|tr '\n' ' ')
+#   read -r password <<< "${1}"
+#   oplogin
+#   op edit item "1password entry" password="$(echo "$password"|tr '\s' ' ')"
 # }
 
 oplogoff() {
