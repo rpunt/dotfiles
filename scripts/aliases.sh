@@ -1,3 +1,5 @@
+#!/bin/bash
+
 alias ll="ls -l"
 alias be="bundle exec"
 alias kls="be kitchen list"
