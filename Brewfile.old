@@ -26,7 +26,7 @@ brew "pkg-config"
 brew "shellcheck"
 brew "wget"
 brew "zlib"
-brew "jandedobbeleer/oh-my-posh/oh-my-posh"
+brew "oh-my-posh"
 cask "1password-cli"
 cask "arduino"
 cask "iterm2"
@@ -35,7 +35,9 @@ cask "postman"
 cask "powershell"
 cask "sourcetree"
 mas "Chronicle", id: 572561420
+mas "GarageBand", id: 682658836
 mas "iMovie", id: 408981434
+mas "Keynote", id: 409183694
 mas "Magnet", id: 441258766
 mas "OmniFocus", id: 1346203938
 mas "Pixelmator", id: 407963104
