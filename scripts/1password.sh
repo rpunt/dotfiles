@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # https://austincloud.guru/2018/11/27/1password-cli-tricks/
 
 oplogin() {
