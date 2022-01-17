@@ -17,3 +17,7 @@ function weather() {
 # if [ "$ENABLE_FAST_GIT_PROMPT" = 1 ]; then
 #   source "${HOME}/.git_bash_prompt"
 # fi
+
+function getaocinputs() {
+  curl https://adventofcode.com/$(date +%Y)/day/$(date +%-d)/input --cookie "session=$(cat ~/.config/aoc/token)"
+}
