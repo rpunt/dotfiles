@@ -1,10 +1,10 @@
 # https://austincloud.guru/2018/11/27/1password-cli-tricks/
 
 oplogin() {
-  op get account 1>/dev/null 2>&1
+  op account get 1>/dev/null 2>&1
   retVal=$?
   if [ $retVal -ne 0 ]; then
-    eval "$(op signin puntfamily)"
+    eval "$(op signin --account puntfamily)"
   fi
 }
 
@@ -15,12 +15,12 @@ oplogin() {
 # }
 
 oplogoff() {
-  op signout
+  op signout --all
 }
 
 getpassword() {
   oplogin
-  op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value'
+  op item get "$1" --format json | jq -r '.fields[] | select(.id=="password").value'
 }
 
 #######
