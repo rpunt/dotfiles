@@ -8,12 +8,13 @@
         {
           "background": "#ff479c",
           "foreground": "#ffffff",
-          "powerline_symbol": "\ue0b0",
           "properties": {
             "style": "full",
             "home_icon": "~"
           },
-          "style": "powerline",
+          "leading_diamond": "<transparent,#ff479c>\ue0b0</>",
+          "style": "diamond",
+          "trailing_diamond": "\ue0b0",
           "template": " \ue5ff {{ .Path }} ",
           "type": "path"
         },
