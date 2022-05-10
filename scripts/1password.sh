@@ -39,5 +39,5 @@ getpassword() {
 
 getmfa() {
   oplogin
-  op get totp "$1"
+  op item get "$1" --format json | jq -r '.fields[] | select(.type=="OTP").totp'
 }
