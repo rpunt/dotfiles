@@ -11,7 +11,7 @@ oplogin() {
 # function adminpassupdate() {
 #   read -r password <<< "${1}"
 #   oplogin
-#   op edit item "1password entry" password="$(echo "$password"|tr '\s' ' ')"
+#   op item edit "1password entry" password="$(echo "$password"|tr '[:space:]' ' ')"
 # }
 
 oplogoff() {
