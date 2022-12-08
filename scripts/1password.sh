@@ -49,3 +49,19 @@ getmfa() {
 
 # # to enable 1password shell plugins, configure them and uncomment this:
 # source "$HOME/.config/op/plugins.sh"
+
+auth_gh_work() {
+  oplogin
+  tokenfile=$(mktemp)
+  gettoken "gh work pat" >"$tokenfile"
+  gh auth login --git-protocol ssh --with-token < "$tokenfile"
+  rm -f "$tokenfile"
+}
+
+auth_gh_home() {
+  oplogin
+  tokenfile=$(mktemp)
+  gettoken "gh personal pat" >"$tokenfile"
+  gh auth login --git-protocol https --with-token < "$tokenfile"
+  rm -f "$tokenfile"
+}
