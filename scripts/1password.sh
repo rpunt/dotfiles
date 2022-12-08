@@ -23,6 +23,11 @@ getpassword() {
   op item get "$1" --format json | jq -r '.fields[] | select(.id=="password").value'
 }
 
+gettoken() {
+  oplogin
+  op item get "$1" --format json | jq -r '.fields[] | select(.label=="token").value'
+}
+
 #######
 ### evaluate these for further use
 #
@@ -41,3 +46,6 @@ getmfa() {
   oplogin
   op item get "$1" --format json | jq -r '.fields[] | select(.type=="OTP").totp'
 }
+
+# # to enable 1password shell plugins, configure them and uncomment this:
+# source "$HOME/.config/op/plugins.sh"
