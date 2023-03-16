@@ -1,4 +1,5 @@
-set -o vi
+set -o vi # turn on VIM keybindings in zsh
+set -k    # set INTERACTIVE_COMMENTS (allow comments in pasted scripts without error)
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
