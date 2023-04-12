@@ -1,10 +1,12 @@
 # https://austincloud.guru/2018/11/27/1password-cli-tricks/
 
 oplogin() {
-  op account get 1>/dev/null 2>&1
-  retVal=$?
-  if [ $retVal -ne 0 ]; then
-    eval "$(op signin --account puntfamily)"
+  # see if we are logged in, will return exit code > 0 if not
+  op whoami 1>/dev/null
+
+  # if we are logged in, skip; if not, ask for master password
+  if [[ $? != 0 ]]; then
+    eval $(op signin)
   fi
 }
 
