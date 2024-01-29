@@ -1,6 +1,6 @@
 set -o vi
 
-if [ ! -z "$BASH_VERSION" ]; then
+if [ -n "$BASH_VERSION" ]; then
   bind "set completion-ignore-case on"
   bind "set completion-map-case on"
   bind "set show-all-if-ambiguous on"

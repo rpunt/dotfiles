@@ -10,7 +10,7 @@ function joinStrings {
 }
 
 function weather() {
-  curl wttr.in/${1:-55328}
+  curl wttr.in/"${1:-55328}"
 }
 
 # export ENABLE_FAST_GIT_PROMPT=0         # faster - don't use with ENABLE_GIT_PROMPT
@@ -19,5 +19,5 @@ function weather() {
 # fi
 
 function getaocinputs() {
-  curl https://adventofcode.com/$(date +%Y)/day/$(date +%-d)/input --cookie "session=$(cat ~/.config/aoc/token)"
+  curl "https://adventofcode.com/$(date +%Y)/day/$(date +%-d)/input" --cookie "session=$(cat ~/.config/aoc/token)"
 }
