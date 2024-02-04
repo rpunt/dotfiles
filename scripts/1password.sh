@@ -4,7 +4,7 @@ oplogin() {
   op account get 1>/dev/null 2>&1
   retVal=$?
   if [ $retVal -ne 0 ]; then
-    eval "$(op signin --account puntfamily)"
+    eval "$(op signin)"
   fi
 }
 
