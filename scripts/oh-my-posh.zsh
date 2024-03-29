@@ -4,4 +4,9 @@
 #eval "$(oh-my-posh --init --shell bash --config /usr/local/opt/oh-my-posh/themes/agnoster.omp.json)"
 #eval "$(oh-my-posh --init --shell bash --config /usr/local/Cellar/oh-my-posh/6.11.2/themes/jandedobbeleer.omp.json)"
 
-eval "$(oh-my-posh --init --shell zsh --config "$HOME"/dev/dotfiles/rpunt.omp.json)"
+autoload -Uz compinit
+compinit
+
+POSH_THEMES_PATH=$(brew --prefix oh-my-posh)/themes
+eval "$(oh-my-posh completion zsh)"
+eval "$(oh-my-posh init zsh --config "$HOME"/dev/dotfiles/rpunt.omp.json)"

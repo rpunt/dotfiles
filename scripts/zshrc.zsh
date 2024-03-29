@@ -21,4 +21,5 @@ export SSH_AUTH_SOCK="${HOME}/Library/Group Containers/2BUA8C4S2C.com.1password/
 # launchctl stop com.openssh.ssh-agent
 # launchctl disable com.openssh.ssh-agent
 
-set -o vi
+set -o vi # turn on VIM keybindings in zsh
+set -k    # set INTERACTIVE_COMMENTS (allow comments in pasted scripts without error)

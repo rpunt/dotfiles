@@ -1,6 +1,20 @@
 # stop bash deprecation warnings
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
+# set vars for colorized shell outputs
+# echo "${red}warning text${reset}"
+function colors() {
+  black=$(tput setaf 0)
+  red=$(tput setaf 1)
+  green=$(tput setaf 2)
+  yellow=$(tput setaf 3)
+  blue=$(tput setaf 4)
+  magenta=$(tput setaf 5)
+  cyan=$(tput setaf 6)
+  white=$(tput setaf 7)
+  reset=$(tput sgr0)
+}
+
 function superpull() {
   find . -type d -name '.git' -print0 | xargs -P 40 -n 1 -0 -I '{}' sh -c "cd \"{}\"/../ && pwd && git checkout master && git pull  && git fetch -p" \;
 }

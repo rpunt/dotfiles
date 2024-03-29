@@ -4,11 +4,30 @@ Personal dotfile supplements
 
 ## Usage
 
+### Bash or ZSH
+
 ```bash
-git clone https://github.com/rpunt/dotfiles.git
-echo -e "for file in \$(ls $(echo ${PWD})/dotfiles/scripts/*.sh); do\n  source \$file\ndone" >>~/.bashrc
-. ~/.bashrc
+git clone https://github.com/rpunt/dotfiles.git; cd dotfiles
+
+ln -sf "${PWD}/bashrc" "$HOME/.bashrc"
+ln -sf "${PWD}/zshrc" "$HOME/.zshrc"
 ```
+
+### Powershell
+
+```powershell
+$symlinkParams = @{
+  Path = $PROFILE
+  Value = "${PWD}/profile.ps1"
+  ItemType = 'SymbolicLink'
+  Force = $true
+}
+New-Item @symlinkParams
+
+. $PROFILE
+```
+
+Close all terminals, and any new terminals will reflect the settings in this repo
 
 ## Package Specifics
 
