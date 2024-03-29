@@ -3,6 +3,9 @@ set -k    # set INTERACTIVE_COMMENTS (allow comments in pasted scripts without e
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# add bindir to PATH
+export PATH="$PATH:$HOME/bin"
+
 # add gobins to PATH
 export PATH="$PATH:$HOME/go/bin"
 
