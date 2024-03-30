@@ -9,8 +9,8 @@ Personal dotfile supplements
 ```bash
 git clone https://github.com/rpunt/dotfiles.git; cd dotfiles
 
-ln -sf "${PWD}/bashrc" "$HOME/.bashrc"
-ln -sf "${PWD}/zshrc" "$HOME/.zshrc"
+echo "source ${PWD}/bashrc" >~/.bashrc
+echo "source ${PWD}/zshrc" >~/.zshrc
 ```
 
 ### Powershell
