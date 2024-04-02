@@ -13,9 +13,7 @@ alias tinit="terraform init"
 alias tplan="terraform plan"
 
 # vscode workspaces
-alias codcc="code ~/Documents/workspaces/dcc.code-workspace"
-alias cochef="code ~/Documents/workspaces/chef.code-workspace"
-alias cosensu="code ~/Documents/workspaces/sensu.code-workspace"
+alias cocac="code ~/Documents/workspaces/cac.code-workspace"
 alias coterraform="code ~/Documents/workspaces/terraform.code-workspace"
 
 # still in beta
