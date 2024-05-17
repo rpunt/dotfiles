@@ -13,6 +13,8 @@ echo "source ${PWD}/bashrc" >~/.bashrc
 echo "source ${PWD}/zshrc" >~/.zshrc
 ```
 
+You can place any environment- or computer-specific overrides in `~/.local_profile_overrides` - they'll be sourced last.
+
 ### Powershell
 
 ```powershell
