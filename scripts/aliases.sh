@@ -20,3 +20,6 @@ alias coterraform="code ~/Documents/workspaces/terraform.code-workspace"
 # alias copilot='gh copilot'
 # alias cps='gh copilot suggest'
 # alias cpe='gh copilot explain'
+
+alias keygen="~/git/crdb/dbops/tools/keygen/keygen.sh"
+alias get_secrets="~/git/crdb/dbops/tools/get_secrets/get_secrets.sh"
