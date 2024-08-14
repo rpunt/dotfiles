@@ -1,4 +1,4 @@
-eval "$($(which brew) shellenv)"
+eval $(/opt/homebrew/bin/brew shellenv)
 
 for file in $(ls ~/dev/dotfiles/scripts/*.zsh); do
   source $file
