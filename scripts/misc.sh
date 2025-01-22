@@ -51,7 +51,7 @@ prep_wal_failover() {
           cluster="${OPTARG}"
           ;;
       *)
-          usage
+          continue
           ;;
     esac
   done
