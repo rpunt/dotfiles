@@ -8,6 +8,7 @@ alias kv="be kitchen verify"
 alias dbc='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt chrome'
 alias dbf='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt firefox'
 alias dbs='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt safari'
+alias dbb='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt browser'
 
 alias tinit="terraform init"
 alias tplan="terraform plan"
