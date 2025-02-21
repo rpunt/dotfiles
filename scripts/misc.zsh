@@ -67,6 +67,7 @@ prep_wal_failover() {
 
   STORY=$(echo $story | tr 'a-z' 'A-Z')
   TERRAFORM_FILE=$(egrep -lir --exclude-dir="tfstate_backups" "service_name\s+\=\s\"${cluster}\"" --include="crdb*.tf")
+  VERSION_FILE=$(dirname $TERRAFORM_FILE)/versions.tf
   if [ -z "$TERRAFORM_FILE" ]; then
     echo "No terraform file found for cluster $cluster"
     return 1
@@ -75,28 +76,35 @@ prep_wal_failover() {
     echo "too many files matched"
     return 1
   fi
-  echo; echo "TERRAFORM_FILE: $TERRAFORM_FILE"; echo
+  echo; echo "TERRAFORM_FILE: $TERRAFORM_FILE"; echo "VERSION_FILE: $VERSION_FILE"; echo
 
+  git push -d origin "$STORY" 2>/dev/null
   git branch -D "$STORY" 2>/dev/null
   git checkout -b "$STORY"
 
   PR_TEMPLATE=$(mktemp)
   echo -e "## What\nrepave ${cluster} for WAL failover\n\n## Why\nhttps://doordash.atlassian.net/browse/${STORY}" > $PR_TEMPLATE
 
-  sed -i '' -e "s/source =.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/prod_cluster\?ref=v24.1.7_05\"/g" "$TERRAFORM_FILE"
+  sed -i '' -e "s/source.*=.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/prod_cluster\?ref=v24.3.6_00\"/g" "$TERRAFORM_FILE"
   sed -i '' -e '/readonly_app_role.*=.*\[\]$/d' "$TERRAFORM_FILE"
   sed -i '' -e "/roles_user_sql.*=.*\[\]$/d" "$TERRAFORM_FILE"
+  sed -i '' -e "/enable_cpu_autoscale_policy.*=.*false$/d" "$TERRAFORM_FILE"
+  sed -i '' -e "/enable_wal_failover.*$/d" "$TERRAFORM_FILE"
   sed -i '' -e '/data_volumes_qty/a\
   enable_wal_failover = true' "$TERRAFORM_FILE"
   terraform fmt "$TERRAFORM_FILE"
+  echo -e 'terraform {\nrequired_version = ">= 1.9"\nrequired_providers {\naws = {\nsource = "hashicorp/aws"\nversion = "~> 5.0"\n}\n}\n}' >"$VERSION_FILE"
+  terraform fmt "$VERSION_FILE"
   # if [[ $(git diff --shortstat) =~ "1 file changed.*2 insertions.*1 deletion" ]]
   # then
     git add "$TERRAFORM_FILE"
+    git add "$VERSION_FILE"
     git commit -m "repave $cluster for WAL failover ($STORY)"
     git push --set-upstream origin "$STORY"
     gh pr create -F $PR_TEMPLATE -t "repave $cluster for WAL failover ($STORY)"
     gh pr view --json url | jq -r .url | pbcopy
     echo; echo "PR URL copied to clipboard"; echo
+    pbpaste >>~/Desktop/my_pr.txt
   # else
   #   echo "Unexpected changeset"
   #   echo
@@ -109,55 +117,71 @@ prep_wal_failover() {
 function merge_mine() {
   colors
 
-  # PRS=($(gh pr list -A @me -L 100 --json number --jq '.[].number' | sort -r))
-  PRS=($(gh pr list -A @me -L 100 --json number --jq '.[].number'))
+  # Get a list of PR numbers assigned to the current user
+  PRS=($(gh pr list -A @me -L 100 --json number --jq '.[].number' | sort))
 
+  # Function to check if a PR is approved
   check_approved() {
-    local pr=$1
-    gh pr view $pr --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length'
+    local approved_count=$(gh pr view $1 --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
+    echo $approved_count
   }
 
+  # Function to check if required checks have passed for a PR
   check_checks() {
-    local pr=$1
-    gh pr checks $pr --required 1>/dev/null 2>&1
-    # gh pr checks $pr 1>/dev/null 2>&1
-    return $?
+    gh pr checks $1 --required 1>/dev/null 2>&1
+    rc=$?
+    return $rc
   }
 
+  # Function to get the merge state of a PR
   check_merge_state() {
-    local pr=$1
-    gh pr view $pr --json mergeStateStatus --jq '.mergeStateStatus'
+    gh pr view $1 --json mergeStateStatus --jq '.mergeStateStatus'
   }
 
   for PR in "${PRS[@]}"; do
     local approved=0
-    local mergeStateStatus="BEHIND"
+    local mergeStateStatus="INVALID"
 
-    # this array syntax is specific to zsh
-    if [ ${PRS[(ie)${PR}]} -gt 1 ]; then
+    # Sleep if there are multiple PRs; if you've just merged one, GitHub might need a minute to catch up
+    if [ ${#PRS[@]} -gt 1 ]; then
       sleep 5
     fi
+
+    # Check if the PR is approved
     approved=$(check_approved $PR)
-    if [ "$approved" -lt 1 ]; then
-      echo ${red}"PR $PR: is not approved${reset}"
+    if [ $approved -eq 0 ]; then
+      echo "${red}PR $PR: is not approved${reset}"
       continue
+    else
+      echo "${green}PR $PR: approved${reset}"
     fi
 
-    mergeStateStatus=$(check_merge_state $PR)
-    if [[ "$mergeStateStatus" == "BEHIND" ]]; then
-      echo ${red}"PR $PR: is ${mergeStateStatus}${reset}"
-      echo "${cyan}PR $PR: updating branch${reset}"
-      gh pr update-branch $PR
-      sleep 8
-      gh pr checks $PR --watch
-    fi
+    # Check the merge state of the PR
+    while [[ "$mergeStateStatus" != "BLOCKED" ]]; do # "BLOCKED" means the PR is ready to merge, but prevented by rule
+      if [[ "$mergeStateStatus" == "BEHIND" ]]; then
+        echo -e "\t${cyan}updating branch${reset}"
+        gh pr update-branch $PR
+        sleep 8
+        gh pr checks $PR --watch
+      elif [[ "$mergeStateStatus" == "UNKNOWN" ]]; then
+        echo -e "${cyan}replanning${reset}"
+        gh pr comment $PR -b 'atlantis plan'
+        sleep 8
+        gh pr checks $PR --watch
+      fi
+      mergeStateStatus=$(check_merge_state $PR)
+      echo "${cyan}PR $PR: mergeStateStatus is ${mergeStateStatus}${reset}"
+    done
 
-    check_checks $PR
-    if [ $? -ne 0 ]; then
+    # Check if required checks have passed
+    if check_checks $PR; then
+      echo "${green}PR $PR: checks passed${reset}"
+    else
       echo "${red}PR $PR: bad checks, skipping${reset}"
       continue
     fi
 
+    # Apply the PR
     echo "${green}PR $PR: applying${reset}"
     gh pr comment $PR -b 'atlantis apply'
     sleep 5
