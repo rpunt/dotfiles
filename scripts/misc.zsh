@@ -85,9 +85,11 @@ prep_wal_failover() {
   PR_TEMPLATE=$(mktemp)
   echo -e "## What\nrepave ${cluster} for WAL failover\n\n## Why\nhttps://doordash.atlassian.net/browse/${STORY}" > $PR_TEMPLATE
 
-  sed -i '' -e "s/source[[:space:]]+=.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/prod_cluster\?ref=v24.3.6_02\"/g" "$TERRAFORM_FILE"
-  sed -i '' -e '/readonly_app_role[[:space:]]+=.*\[\]$/d' "$TERRAFORM_FILE"
-  sed -i '' -e "/roles_user_sql[[:space:]]+=.*\[\]$/d" "$TERRAFORM_FILE"
+  sed -i '' -E "s/source[[:space:]]+=[[:space:]]+\"git.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/prod_cluster\?ref=v24.3.6_02\"/g" "$TERRAFORM_FILE"
+  sed -i '' -e '/readonly_app_role.*=.*\[\]$/d' "$TERRAFORM_FILE"
+  sed -i '' -e "/roles_user_sql.*=.*\[\]$/d" "$TERRAFORM_FILE"
+  sed -i '' -e "/db_object_owner.*$/d" "$TERRAFORM_FILE"
+  sed -i '' -e "/dba_login_suffixes.*$/d" "$TERRAFORM_FILE"
   sed -i '' -e "/enable_cpu_autoscale_policy[[:space:]]+=.*false$/d" "$TERRAFORM_FILE"
   sed -i '' -e "/enable_wal_failover.*$/d" "$TERRAFORM_FILE"
   sed -i '' -e '/data_volumes_qty/a\
