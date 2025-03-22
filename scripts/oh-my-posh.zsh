@@ -8,5 +8,5 @@ autoload -Uz compinit
 compinit
 
 POSH_THEMES_PATH=$(brew --prefix oh-my-posh)/themes
-eval "$(oh-my-posh completion zsh)"
+#eval "$(oh-my-posh completion zsh)"
 eval "$(oh-my-posh init zsh --config "$HOME"/dev/dotfiles/rpunt.omp.json)"
