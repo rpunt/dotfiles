@@ -40,11 +40,11 @@ function sgrep() {
  grep -ir --exclude-dir="tfstate_backups" $1 | grep service_name
 }
 
-prep_wal_failover() {
-  local OPTIND o s c
-  while getopts "s:c:" o; do
+function prep_wal_failover() {
+  local OPTIND o i c
+  while getopts "i:c:" o; do
     case "${o}" in
-      s)
+      i)
           story="${OPTARG}"
           ;;
       c)
@@ -58,7 +58,7 @@ prep_wal_failover() {
   shift $((OPTIND-1))
 
   if [[ -z $story ]] || [[ -z $cluster ]]; then
-    echo "prep_wal_failover [-c cluster] [-s story]";
+    echo "prep_wal_failover [-c cluster] [-i issue]";
     return 1
   fi
 
@@ -83,14 +83,14 @@ prep_wal_failover() {
   git checkout -b "$STORY"
 
   PR_TEMPLATE=$(mktemp)
-  echo -e "## What\nrepave ${cluster} for WAL failover\n\n## Why\nhttps://doordash.atlassian.net/browse/${STORY}" > $PR_TEMPLATE
+  echo -e "## What\nrepave ${cluster}\n\n## Why\nhttps://doordash.atlassian.net/browse/${STORY}" > $PR_TEMPLATE
 
-  sed -i '' -E "s/source[[:space:]]+=[[:space:]]+\"git.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/prod_cluster\?ref=v24.3.6_02\"/g" "$TERRAFORM_FILE"
-  sed -i '' -e '/readonly_app_role.*=.*\[\]$/d' "$TERRAFORM_FILE"
-  sed -i '' -e "/roles_user_sql.*=.*\[\]$/d" "$TERRAFORM_FILE"
-  sed -i '' -e "/db_object_owner.*$/d" "$TERRAFORM_FILE"
-  sed -i '' -e "/dba_login_suffixes.*$/d" "$TERRAFORM_FILE"
-  sed -i '' -e "/enable_cpu_autoscale_policy[[:space:]]+=.*false$/d" "$TERRAFORM_FILE"
+  sed -i '' -E "s/source[[:space:]]+=[[:space:]]+\"git.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/prod_cluster\?ref=v24.3.8_04\"/g" "$TERRAFORM_FILE"
+  sed -i '' -E '/readonly_app_role[[:space:]]+=[[:space:]]+\[\]$/d' "$TERRAFORM_FILE"
+  sed -i '' -E "/roles_user_sql[[:space:]]+=[[:space:]]+\[\]$/d" "$TERRAFORM_FILE"
+  # sed -i '' -e "/db_object_owner.*$/d" "$TERRAFORM_FILE"
+  # sed -i '' -e "/dba_login_suffixes.*$/d" "$TERRAFORM_FILE"
+  sed -i '' -E "/enable_cpu_autoscale_policy[[:space:]]+=[[:space:]]+false$/d" "$TERRAFORM_FILE"
   sed -i '' -e "/enable_wal_failover.*$/d" "$TERRAFORM_FILE"
   sed -i '' -e '/data_volumes_qty/a\
   enable_wal_failover = true' "$TERRAFORM_FILE"
@@ -101,9 +101,9 @@ prep_wal_failover() {
   # then
     git add "$TERRAFORM_FILE"
     git add "$VERSION_FILE"
-    git commit -m "repave $cluster for WAL failover ($STORY)"
+    git commit -m "repave $cluster ($STORY)"
     git push --set-upstream origin "$STORY"
-    gh pr create -F $PR_TEMPLATE -t "repave $cluster for WAL failover ($STORY)"
+    gh pr create -F $PR_TEMPLATE -t "repave $cluster ($STORY)"
     gh pr view --json url | jq -r .url | pbcopy
     echo; echo "PR URL copied to clipboard"; echo
     pbpaste >>~/Desktop/my_pr.txt
@@ -114,6 +114,25 @@ prep_wal_failover() {
   #   git diff
   # fi
   rm -f "$PR_TEMPLATE"
+}
+
+function check_pr_approved() {
+  local approved_count=$(gh pr view $1 --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
+  echo $approved_count
+}
+
+function check_pr_checks() {
+  gh pr checks $1 --required 1>/dev/null 2>&1
+  rc=$?
+  return $rc
+}
+
+function check_pr_merge_state() {
+  gh pr view $1 --json mergeStateStatus --jq '.mergeStateStatus'
+}
+
+function check_pr_is_merged() {
+  gh pr view $1 --json state --jq '.state'
 }
 
 function merge_mine() {
@@ -189,4 +208,58 @@ function merge_mine() {
     sleep 5
     gh pr checks $PR --watch
   done
+}
+
+function hammer_away() {
+  colors
+
+  PR=$1
+
+  local merged=$(check_pr_is_merged $PR)
+  while [[ "$merged" != "MERGED" ]]; do
+    echo "${cyan}PR $PR: is ${merged}${reset}"
+    # Check if the PR is approved
+    approved=$(check_pr_approved $PR)
+    if [ $approved -eq 0 ]; then
+      echo "${red}PR $PR: is not approved${reset}"
+      break
+    else
+      echo "${green}PR $PR: approved${reset}"
+    fi
+
+    # Check the merge state of the PR
+    mergeStateStatus=$(check_pr_merge_state $PR)
+    echo "${cyan}PR $PR: mergeStateStatus is ${mergeStateStatus}${reset}"
+    # while [[ "$mergeStateStatus" != "BLOCKED" ]]; do # "BLOCKED" means the PR is ready to merge, but prevented by rule
+    if [[ "$mergeStateStatus" == "BEHIND" ]]; then
+      echo -e "\t${cyan}updating branch${reset}"
+      gh pr update-branch $PR
+      sleep 8
+      gh pr checks $PR --watch
+      continue
+    elif [[ "$mergeStateStatus" == "UNKNOWN" ]]; then
+      echo -e "${cyan}replanning${reset}"
+      gh pr comment $PR -b 'atlantis plan'
+      sleep 8
+      gh pr checks $PR --watch
+      continue
+    fi
+
+    # Check if required checks have passed
+    if check_pr_checks $PR; then
+      echo "${green}PR $PR: checks passed${reset}"
+    else
+      echo "${red}PR $PR: bad checks, skipping${reset}"
+      break
+    fi
+
+    # Apply the PR
+    echo "${green}PR $PR: applying${reset}"
+    gh pr comment $PR -b 'atlantis apply'
+    sleep 5
+    gh pr checks $PR --watch
+
+    merged=$(check_pr_is_merged $PR)
+  done
+  echo "${cyan}PR $PR: is ${merged}${reset}"
 }
