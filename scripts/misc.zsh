@@ -42,13 +42,16 @@ function sgrep() {
 
 function prep_wal_failover() {
   local OPTIND o i c
-  while getopts "i:c:" o; do
+  while getopts "i:c:e:" o; do
     case "${o}" in
       i)
           story="${OPTARG}"
           ;;
       c)
           cluster="${OPTARG}"
+          ;;
+      e)
+          environment="${OPTARG}"
           ;;
       *)
           continue
@@ -57,8 +60,8 @@ function prep_wal_failover() {
   done
   shift $((OPTIND-1))
 
-  if [[ -z $story ]] || [[ -z $cluster ]]; then
-    echo "prep_wal_failover [-c cluster] [-i issue]";
+  if [[ -z $story ]] || [[ -z $cluster ]] || [[ -z $environment ]]; then
+    echo "prep_wal_failover [-e environment] [-c cluster] [-i issue]";
     return 1
   fi
 
@@ -68,6 +71,10 @@ function prep_wal_failover() {
   STORY=$(echo $story | tr 'a-z' 'A-Z')
   TERRAFORM_FILE=$(egrep -lir --exclude-dir="tfstate_backups" "service_name\s+\=\s\"${cluster}\"" --include="crdb*.tf")
   VERSION_FILE=$(dirname $TERRAFORM_FILE)/versions.tf
+  if [[ "$environment" != "prod" && "$environment" != "staging" ]]; then
+    echo "Invalid environment: $environment. Must be 'prod' or 'staging'."
+    return 1
+  fi
   if [ -z "$TERRAFORM_FILE" ]; then
     echo "No terraform file found for cluster $cluster"
     return 1
@@ -85,7 +92,7 @@ function prep_wal_failover() {
   PR_TEMPLATE=$(mktemp)
   echo -e "## What\nrepave ${cluster}\n\n## Why\nhttps://doordash.atlassian.net/browse/${STORY}" > $PR_TEMPLATE
 
-  sed -i '' -E "s/source[[:space:]]+=[[:space:]]+\"git.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/prod_cluster\?ref=v24.3.8_04\"/g" "$TERRAFORM_FILE"
+  sed -i '' -E "s/source[[:space:]]+=[[:space:]]+\"git.*/source = \"git::https:\/\/github.com\/doordash\/terraform-aws-crdb.git\/\/${environment}_cluster\?ref=v24.3.8_07\"/g" "$TERRAFORM_FILE"
   sed -i '' -E '/readonly_app_role[[:space:]]+=[[:space:]]+\[\]$/d' "$TERRAFORM_FILE"
   sed -i '' -E "/roles_user_sql[[:space:]]+=[[:space:]]+\[\]$/d" "$TERRAFORM_FILE"
   # sed -i '' -e "/db_object_owner.*$/d" "$TERRAFORM_FILE"
