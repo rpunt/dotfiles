@@ -287,3 +287,26 @@ function hammer_away() {
   done
   echo "${cyan}PR $PR: is ${merged}${reset}"
 }
+
+function approve_list() {
+  sourcefile="$1"
+  for pr in $(cat "$sourcefile"); do
+    number=$(echo $pr | grep -o '[0-9]\+')
+
+    # if the pr is approved, skip it
+    if [[ $(check_pr_approved $number) -gt 0 ]]; then
+      echo "PR $pr is already approved, skipping."
+      continue
+    fi
+
+    # view the PR in terminal
+    gh pr view $pr
+
+    # prompt for approval; if I approve, merge the PR
+    echo -n "Do you approve PR $pr? (y/n) "
+    read approve
+    if [[ $approve == "y" ]]; then
+      gh pr review -a $pr
+    fi
+  done
+}
