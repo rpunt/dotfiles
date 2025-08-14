@@ -41,18 +41,63 @@ function sgrep() {
 }
 
 function check_pr_approved() {
-  local approved_count=$(gh pr view $1 --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
+
+  # Check if PR exists first
+  if ! gh pr view "$1" &>/dev/null; then
+    echo "Error: PR #$1 not found" >&2
+    return 1
+  fi
+
+  local approved_count=$(gh pr view "$1" --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
   echo $approved_count
 }
 
+function check_pr_approvers() {
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
+
+  gh pr view "$1" --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | .[].author.login' 2>/dev/null
+}
+
 function check_pr_checks() {
-  gh pr checks $1 --required 1>/dev/null 2>&1
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
+
+  # Check if PR exists first
+  if ! gh pr view "$1" &>/dev/null; then
+    echo "Error: PR #$1 not found" >&2
+    return 1
+  fi
+
+  gh pr checks "$1" --required 1>/dev/null 2>&1
   rc=$?
   return $rc
 }
 
+function check_pr_failed_checks() {
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
+
+  gh pr view "$1" --json statusCheckRollup --jq '.statusCheckRollup[] | select(.state != "SUCCESS" and .state != null) | {context: .context, state: .state, targetUrl: .targetUrl}'
+}
+
 function check_pr_merge_state() {
-  gh pr view $1 --json mergeStateStatus --jq '.mergeStateStatus'
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
+
+  gh pr view "$1" --json mergeStateStatus --jq '.mergeStateStatus'
 }
 
 function check_pr_is_merged() {
@@ -62,26 +107,15 @@ function check_pr_is_merged() {
 function merge_mine() {
   colors
 
-  # Get a list of PR numbers assigned to the current user
-  PRS=($(gh pr list -A @me -L 100 --json number --jq '.[].number' | sort))
+  # Get a list of PR numbers assigned to the current user (excluding drafts)
+  PRS=($(gh pr list -A @me -L 100 --json number,isDraft --jq '.[] | select(.isDraft == false) | .number' | sort))
 
-  # Function to check if a PR is approved
-  check_approved() {
-    local approved_count=$(gh pr view $1 --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
-    echo $approved_count
-  }
+  if [ ${#PRS[@]} -eq 0 ]; then
+    echo "${yellow}No PRs found assigned to you${reset}"
+    return 0
+  fi
 
-  # Function to check if required checks have passed for a PR
-  check_checks() {
-    gh pr checks $1 --required 1>/dev/null 2>&1
-    rc=$?
-    return $rc
-  }
-
-  # Function to get the merge state of a PR
-  check_merge_state() {
-    gh pr view $1 --json mergeStateStatus --jq '.mergeStateStatus'
-  }
+  echo "${cyan}Found ${#PRS[@]} PRs to process${reset}"
 
   for PR in "${PRS[@]}"; do
     local approved=0
@@ -92,37 +126,84 @@ function merge_mine() {
       sleep 5
     fi
 
+    echo "${cyan}Processing PR $PR${reset}"
+
     # Check if the PR is approved
-    approved=$(check_approved $PR)
+    approved=$(check_pr_approved $PR)
     if [ $approved -eq 0 ]; then
       echo "${red}PR $PR: is not approved${reset}"
       continue
     else
-      echo "${green}PR $PR: approved${reset}"
+      echo "${green}PR $PR: approved with $approved approval(s)${reset}"
     fi
 
-    # Check the merge state of the PR
-    while [[ "$mergeStateStatus" != "BLOCKED" ]]; do # "BLOCKED" means the PR is ready to merge, but prevented by rule
-      if [[ "$mergeStateStatus" == "BEHIND" ]]; then
+    # Process the PR until it's in BLOCKED state or we hit an error
+    local max_attempts=10
+    local attempt=1
+
+    while [[ $attempt -le $max_attempts ]]; do
+      mergeStateStatus=$(check_pr_merge_state $PR)
+      echo "${cyan}PR $PR: mergeStateStatus is ${mergeStateStatus}${reset}"
+
+      if [[ "$mergeStateStatus" == "BLOCKED" ]]; then
+        # BLOCKED means the PR is ready to merge, but prevented by rule (which is what we want)
+
+        # Check if we're blocked by pullapprove
+        failed_checks=$(check_pr_failed_checks $PR)
+        if [ -n "$failed_checks" ] && echo "$failed_checks" | jq -e 'select(.context == "pullapprove" and .state == "PENDING")' > /dev/null; then
+          echo "${yellow}    - Waiting on human approval via pullapprove, skipping${reset}"
+          continue 2
+        fi
+
+        break
+      elif [[ "$mergeStateStatus" == "BEHIND" ]]; then
         echo -e "\t${cyan}updating branch${reset}"
-        gh pr update-branch $PR
+        if ! gh pr update-branch $PR; then
+          echo "${red}Failed to update branch for PR $PR${reset}"
+          continue 2
+        fi
         sleep 8
         gh pr checks $PR --watch
       elif [[ "$mergeStateStatus" == "UNKNOWN" ]]; then
-        echo -e "${cyan}replanning${reset}"
+        echo -e "\t${cyan}replanning${reset}"
         gh pr comment $PR -b 'atlantis plan'
         sleep 8
         gh pr checks $PR --watch
+      elif [[ "$mergeStateStatus" == "DIRTY" || "$mergeStateStatus" == "UNSTABLE" ]]; then
+        echo "${red}PR $PR: merge state is $mergeStateStatus, skipping${reset}"
+        continue 2
+      else
+        echo "${yellow}PR $PR: unhandled merge state $mergeStateStatus, trying again${reset}"
       fi
-      mergeStateStatus=$(check_merge_state $PR)
-      echo "${cyan}PR $PR: mergeStateStatus is ${mergeStateStatus}${reset}"
+
+      ((attempt++))
+
+      if [[ $attempt -gt $max_attempts ]]; then
+        echo "${red}PR $PR: exceeded maximum attempts, skipping${reset}"
+        continue 2
+      fi
     done
 
     # Check if required checks have passed
-    if check_checks $PR; then
+    if check_pr_checks $PR; then
       echo "${green}PR $PR: checks passed${reset}"
     else
-      echo "${red}PR $PR: bad checks, skipping${reset}"
+      echo "${red}PR $PR: bad checks, details:${reset}"
+      failed_checks=$(check_pr_failed_checks $PR)
+      if [ -n "$failed_checks" ]; then
+        # Check if we're waiting on pullapprove
+        if echo "$failed_checks" | jq -e 'select(.context == "pullapprove" and .state == "PENDING")' > /dev/null; then
+          echo "${yellow}    - Waiting on human approval via pullapprove, skipping${reset}"
+          continue
+        fi
+
+        # Display all failed checks
+        echo "$failed_checks" | jq -r '. | "    - \(.context): \(.state) (\(.targetUrl))"' | while read -r line; do
+          echo -e "${red}$line${reset}"
+        done
+      else
+        echo "${red}    - No details available${reset}"
+      fi
       continue
     fi
 
@@ -131,7 +212,11 @@ function merge_mine() {
     gh pr comment $PR -b 'atlantis apply'
     sleep 5
     gh pr checks $PR --watch
+
+    echo "${green}PR $PR: processing complete${reset}"
   done
+
+  echo "${green}All PRs processed${reset}"
 }
 
 function hammer_away() {
@@ -173,7 +258,22 @@ function hammer_away() {
     if check_pr_checks $PR; then
       echo "${green}PR $PR: checks passed${reset}"
     else
-      echo "${red}PR $PR: bad checks, skipping${reset}"
+      echo "${red}PR $PR: bad checks, details:${reset}"
+      failed_checks=$(check_pr_failed_checks $PR)
+      if [ -n "$failed_checks" ]; then
+        # Check if we're waiting on pullapprove
+        if echo "$failed_checks" | jq -e 'select(.context == "pullapprove" and .state == "PENDING")' > /dev/null; then
+          echo "${yellow}    - Waiting on human approval via pullapprove, breaking${reset}"
+          break
+        fi
+
+        # Display all failed checks
+        echo "$failed_checks" | jq -r '. | "    - \(.context): \(.state) (\(.targetUrl))"' | while read -r line; do
+          echo -e "${red}$line${reset}"
+        done
+      else
+        echo "${red}    - No details available${reset}"
+      fi
       break
     fi
 
