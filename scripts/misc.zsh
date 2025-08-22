@@ -288,25 +288,103 @@ function hammer_away() {
   echo "${cyan}PR $PR: is ${merged}${reset}"
 }
 
+function review_pr() {
+  colors
+
+  if [ -z "$1" ]; then
+    echo "${red}Error: PR number is required${reset}" >&2
+    return 1
+  fi
+
+  local pr="$1"
+
+  # Check if PR exists first
+  if ! gh pr view "$pr" &>/dev/null; then
+    echo "${red}Error: PR #$pr not found${reset}" >&2
+    return 1
+  fi
+
+  # if the pr is approved, skip it
+  local approved=$(check_pr_approved $pr)
+  if [[ $approved -gt 0 ]]; then
+    echo "${yellow}PR $pr is already approved by $approved reviewer(s), skipping.${reset}"
+    return 0
+  fi
+
+  # Get PR title to show with the prompt
+  local title=$(gh pr view "$pr" --json title --jq '.title')
+  local author=$(gh pr view "$pr" --json author --jq '.author.login')
+
+  # view the PR in terminal
+  echo "${cyan}Reviewing PR #$pr by $author: $title${reset}"
+  gh pr view --comments $pr
+
+  # Show the diff if requested
+  echo -n "${cyan}Do you want to see the diff? (y/n) ${reset}"
+  read show_diff
+  show_diff=$(echo "$show_diff" | tr '[:upper:]' '[:lower:]')
+
+  if [[ $show_diff == "y" ]]; then
+    gh pr diff $pr | less
+  fi
+
+  # prompt for approval; if I approve, merge the PR
+  echo -n "${green}Do you approve PR $pr? (y/n/s for skip) ${reset}"
+  read approve
+  approve=$(echo "$approve" | tr '[:upper:]' '[:lower:]')
+
+  if [[ $approve == "y" ]]; then
+    echo "${cyan}Approving PR #$pr...${reset}"
+    gh pr review -a $pr
+    echo "${green}PR #$pr approved!${reset}"
+  elif [[ $approve == "s" ]]; then
+    echo "${yellow}Skipping PR #$pr${reset}"
+  else
+    echo "${red}PR #$pr not approved${reset}"
+  fi
+}
+
 function approve_list() {
-  sourcefile="$1"
+  if [ -z "$1" ]; then
+    echo "${red}Error: Source file is required${reset}" >&2
+    return 1
+  fi
+
+  local sourcefile="$1"
+
+  if [ ! -f "$sourcefile" ]; then
+    echo "${red}Error: File '$sourcefile' not found${reset}" >&2
+    return 1
+  fi
+
+  echo "${cyan}Processing PRs from $sourcefile...${reset}"
   for pr in $(cat "$sourcefile"); do
     number=$(echo $pr | grep -o '[0-9]\+')
+    review_pr $number
+  done
+  echo "${green}All PRs from $sourcefile processed!${reset}"
+}
 
-    # if the pr is approved, skip it
-    if [[ $(check_pr_approved $number) -gt 0 ]]; then
-      echo "PR $pr is already approved, skipping."
-      continue
-    fi
-
-    # view the PR in terminal
-    gh pr view $pr
-
-    # prompt for approval; if I approve, merge the PR
-    echo -n "Do you approve PR $pr? (y/n) "
-    read approve
-    if [[ $approve == "y" ]]; then
-      gh pr review -a $pr
-    fi
+function approve_for() {
+  case $1 in
+    "shamer")
+      username="shamer-dd"
+      ;;
+    "rpunt")
+      username="dd-rpunt"
+      ;;
+    "jloar")
+      username="dd-jloar"
+      ;;
+    "bkwon")
+      username="bryankwon-doordash"
+      ;;
+    *)
+      echo "Unknown user: $1"
+      return 1
+      ;;
+  esac
+  for pr in $(gh pr list -A "$username" --json number,isDraft --jq '.[] | select(.isDraft == false) | .number'); do
+    review_pr $pr
   done
 }
