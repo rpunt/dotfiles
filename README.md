@@ -9,6 +9,8 @@ Personal dotfile supplements
 ```bash
 git clone https://github.com/rpunt/dotfiles.git; cd dotfiles
 
+brew bundle install
+
 echo "source ${PWD}/bashrc" >~/.bashrc
 echo "source ${PWD}/zshrc" >~/.zshrc
 ```
