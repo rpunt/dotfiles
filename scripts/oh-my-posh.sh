@@ -6,6 +6,8 @@
 
 # eval "$(oh-my-posh --init --shell bash --config "$HOME"/dev/dotfiles/rpunt.omp.json)"
 
-POSH_THEMES_PATH=$(brew --prefix oh-my-posh)/themes
+if type brew &>/dev/null; then
+  POSH_THEMES_PATH=$(brew --prefix oh-my-posh)/themes
+fi
 eval "$(oh-my-posh completion bash)"
 eval "$(oh-my-posh init bash --config "$HOME"/dev/dotfiles/rpunt.omp.json | sed 's|\[\[ -v MC_SID \]\]|[[ -n "$MC_SID" ]]|')"
