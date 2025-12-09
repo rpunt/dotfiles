@@ -1,4 +1,6 @@
-eval $(/opt/homebrew/bin/brew shellenv)
+if type brew &>/dev/null; then
+  eval $(/opt/homebrew/bin/brew shellenv)
+fi
 
 for file in $(ls ~/dev/dotfiles/scripts/*.zsh); do
   source $file

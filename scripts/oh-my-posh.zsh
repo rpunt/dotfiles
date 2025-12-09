@@ -7,9 +7,13 @@
 autoload -Uz compinit
 compinit
 
+set -x
+
 if type brew &>/dev/null; then
   POSH_THEMES_PATH=$(brew --prefix oh-my-posh)/themes
 fi
 
 #eval "$(oh-my-posh completion zsh)"
 eval "$(oh-my-posh init zsh --config "$HOME"/dev/dotfiles/rpunt.omp.json)"
+
+set +x

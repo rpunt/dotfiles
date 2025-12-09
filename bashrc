@@ -1,4 +1,6 @@
-eval "$($(which brew) shellenv)"
+if type brew &>/dev/null; then
+  eval "$($(which brew) shellenv)"
+fi
 
 for file in $(ls ~/dev/dotfiles/scripts/*.sh); do
   source $file

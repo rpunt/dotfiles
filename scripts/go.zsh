@@ -1,2 +1,4 @@
 export GOPATH=~/go
-export GOROOT="$(brew --prefix go)/libexec"
+if type brew &>/dev/null; then
+  export GOROOT="$(brew --prefix go)/libexec"
+fi
