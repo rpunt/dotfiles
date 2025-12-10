@@ -41,7 +41,8 @@ case "${OS_TYPE:-}" in
     # e.g. Homebrew
     if [[ -d "/opt/homebrew/bin" ]]; then
       prepend_path "/opt/homebrew/bin"
-    elif [[ -d "/usr/local/bin" ]]; then
+    fi
+    if [[ -d "/usr/local/bin" ]]; then
       prepend_path "/usr/local/bin"
     fi
     ;;

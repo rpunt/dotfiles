@@ -1,3 +1,5 @@
+export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dev/dotfiles}"
+
 if [[ -f "${DOTFILES_DIR}/scripts/common.sh" ]]; then
   source "${DOTFILES_DIR}/scripts/common.sh"
 fi
