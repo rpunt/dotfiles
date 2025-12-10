@@ -4,6 +4,3 @@
 # type -a ruby
 
 # we're assuming a zsh/homebrew-centric installation here
-
-#. "$(brew --prefix asdf)/libexec/asdf"
-export PATH="$HOME/.asdf/shims:$PATH"

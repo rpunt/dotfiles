@@ -17,6 +17,8 @@ alias tplan="terraform plan"
 alias cocac="code ~/Documents/workspaces/cac.code-workspace"
 alias coterraform="code ~/Documents/workspaces/terraform.code-workspace"
 
+alias cr_start_single='cockroach start-single-node --store=$(brew --prefix)/var/cockroach/single --http-port=26256 --insecure --host=localhost'
+
 # still in beta
 # alias copilot='gh copilot'
 # alias cps='gh copilot suggest'

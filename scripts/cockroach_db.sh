@@ -1,5 +1,3 @@
-alias cr_start_single='cockroach start-single-node --store=$(brew --prefix)/var/cockroach/single --http-port=26256 --insecure --host=localhost'
-
 function cr_start_node() {
   node='{
     "1": {
@@ -32,10 +30,12 @@ function cr_start_node() {
     --background \
     --pid-file "$(brew --prefix)/var/run/cr_node${1}.pid"
 }
+
 function cr_stop_node() {
   PIDFILE="$(brew --prefix)/var/run/cr_node${1}.pid"
   kill -TERM "$(cat "$PIDFILE")" && rm -f "$PIDFILE"
 }
+
 function cr_restart_node() {
   echo "Stopping node ${1}"
   cr_stop_node "$1"
