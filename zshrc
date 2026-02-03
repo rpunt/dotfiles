@@ -1,4 +1,4 @@
-export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dev/dotfiles}"
+export DOTFILES_DIR="${DOTFILES_DIR:-${${(%):-%x}:a:h}}" # set DOTFILES_DIR to the directory of this file if not already set
 
 if [[ -f "${DOTFILES_DIR}/scripts/common.sh" ]]; then
   source "${DOTFILES_DIR}/scripts/common.sh"
@@ -7,7 +7,7 @@ fi
 # Zsh-only behavior (completion, zle, etc.)
 if [[ -n "$ZSH_VERSION" ]]; then
   if type brew &>/dev/null; then
-    eval $(/opt/homebrew/bin/brew shellenv)
+    eval $($(brew --prefix)/bin/brew shellenv)
   fi
 
   autoload bashcompinit && bashcompinit
@@ -20,7 +20,7 @@ if [[ -n "$ZSH_VERSION" ]]; then
   # 1password CLI completions
   eval "$(op completion zsh)"; compdef _op op
 
-  [[ -s '/opt/homebrew/bin/aws_completer' ]] && complete -C '/opt/homebrew/bin/aws_completer' aws
+  [[ -s $(brew --prefix)/bin/aws_completer ]] && complete -C "$(brew --prefix)/bin/aws_completer" aws
 
   # load completions from Homebrew
   if type brew &>/dev/null; then
