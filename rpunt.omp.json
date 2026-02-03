@@ -7,8 +7,7 @@
       "alignment": "left",
       "segments": [
         {
-          "properties": {
-            "cache_duration": "none",
+          "options": {
             "home_icon": "~",
             "style": "full"
           },
@@ -21,10 +20,7 @@
           "style": "diamond"
         },
         {
-          "properties": {
-            "branch_max_length": 0,
-            "cache_duration": "none",
-            "fetch_stash_count": true,
+          "options": {
             "fetch_status": true,
             "fetch_upstream_icon": true
           },
@@ -44,7 +40,7 @@
           ]
         },
         {
-          "properties": {
+          "options": {
             "cache_duration": "none",
             "fetch_version": true
           },
@@ -56,7 +52,7 @@
           "style": "powerline"
         },
         {
-          "properties": {
+          "options": {
             "cache_duration": "none",
             "fetch_version": true
           },
@@ -68,7 +64,7 @@
           "style": "powerline"
         },
         {
-          "properties": {
+          "options": {
             "cache_duration": "none",
             "fetch_version": true
           },
@@ -80,7 +76,7 @@
           "style": "powerline"
         },
         {
-          "properties": {
+          "options": {
             "cache_duration": "none",
             "display_mode": "files",
             "fetch_version": true,
@@ -94,7 +90,7 @@
           "style": "powerline"
         },
         {
-          "properties": {
+          "options": {
             "cache_duration": "none",
             "display_mode": "files",
             "fetch_version": true
@@ -107,7 +103,7 @@
           "style": "powerline"
         },
         {
-          "properties": {
+          "options": {
             "cache_duration": "none",
             "display_mode": "files",
             "fetch_version": false
@@ -120,8 +116,7 @@
           "style": "powerline"
         },
         {
-          "properties": {
-            "cache_duration": "none",
+          "options": {
             "display_default": false
           },
           "template": " \ue7ad {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} ",
@@ -135,7 +130,7 @@
           ]
         },
         {
-          "properties": {
+          "options": {
             "cache_duration": "none",
             "root_icon": "\uf0ad"
           },
@@ -153,7 +148,7 @@
       "alignment": "right",
       "segments": [
         {
-          "properties": {
+          "options": {
             "cache_duration": "none"
           },
           "leading_diamond": "<transparent,#E06C75>\ue0c6</>",
@@ -171,7 +166,7 @@
       "alignment": "left",
       "segments": [
         {
-          "properties": {
+          "options": {
             "cache_duration": "none"
           },
           "template": "$",
