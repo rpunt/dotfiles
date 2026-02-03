@@ -1,7 +1,7 @@
 # stop bash deprecation warnings
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
-DOTFILES_DIR="${HOME}/dev/dotfiles"
+export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dev/dotfiles}"
 
 # shellcheck source=/dev/null
 if [[ -f "${DOTFILES_DIR}/scripts/common.sh" ]]; then

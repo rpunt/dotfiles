@@ -9,4 +9,4 @@ if type brew &>/dev/null; then
   POSH_THEMES_PATH=$(brew --prefix oh-my-posh)/themes
 fi
 
-eval "$(oh-my-posh init "$DETECTED_SHELL" --config "$HOME"/dev/dotfiles/rpunt.omp.json | sed 's|\[\[ -v MC_SID \]\]|[[ -n "$MC_SID" ]]|')"
+eval "$(oh-my-posh init "$DETECTED_SHELL" --config ${DOTFILES_DIR}/rpunt.omp.json | sed 's|\[\[ -v MC_SID \]\]|[[ -n "$MC_SID" ]]|')"

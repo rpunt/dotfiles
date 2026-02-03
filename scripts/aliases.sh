@@ -5,10 +5,10 @@ alias krm="be kitchen destroy"
 alias kmk="be kitchen converge"
 alias kv="be kitchen verify"
 
-alias dbc='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt chrome'
-alias dbf='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt firefox'
-alias dbs='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt safari'
-alias dbb='osascript $HOME/dev/dotfiles/scripts/setDefaultBrowser.scpt browser'
+alias dbc='osascript ${DOTFILES_DIR}/scripts/setDefaultBrowser.scpt chrome'
+alias dbf='osascript ${DOTFILES_DIR}/scripts/setDefaultBrowser.scpt firefox'
+alias dbs='osascript ${DOTFILES_DIR}/scripts/setDefaultBrowser.scpt safari'
+alias dbb='osascript ${DOTFILES_DIR}/scripts/setDefaultBrowser.scpt browser'
 
 alias tinit="terraform init"
 alias tplan="terraform plan"

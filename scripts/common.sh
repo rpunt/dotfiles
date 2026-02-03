@@ -1,7 +1,8 @@
 # scripts/common.sh
 # Shared loader for bash/zsh
 
-DOTFILES_DIR="${DOTFILES_DIR:-${HOME}/dev/dotfiles}"
+# DOTFILES_DIR="${DOTFILES_DIR:-${HOME}/dev/dotfiles}"
+# export DOTFILES_DIR
 
 # Detect OS
 case "$(uname -s)" in
