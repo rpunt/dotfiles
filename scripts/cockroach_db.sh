@@ -14,7 +14,7 @@ function cr_start_node() {
     }
   }'
 
-  if [ -s "$(brew --prefix)/var/run/cr_node${1}.pid" ]; then
+  if [ -s "${BREW_PREFIX:-$(brew --prefix)}/var/run/cr_node${1}.pid" ]; then
     echo "PIDfile exists; is this node already running?"
     return 1
   fi
@@ -23,16 +23,16 @@ function cr_start_node() {
   http_addr=$(echo $node | jq --arg nodenumber "$1" '. | .[$nodenumber] | .http_addr')
   cockroach start \
     --insecure \
-    --store="$(brew --prefix)/var/cockroach/node${1}" \
+    --store="${BREW_PREFIX:-$(brew --prefix)}/var/cockroach/node${1}" \
     --listen-addr=localhost:${listen_addr} \
     --http-addr=localhost:${http_addr} \
     --join=localhost:26257,localhost:26258,localhost:26259 \
     --background \
-    --pid-file "$(brew --prefix)/var/run/cr_node${1}.pid"
+    --pid-file "${BREW_PREFIX:-$(brew --prefix)}/var/run/cr_node${1}.pid"
 }
 
 function cr_stop_node() {
-  PIDFILE="$(brew --prefix)/var/run/cr_node${1}.pid"
+  PIDFILE="${BREW_PREFIX:-$(brew --prefix)}/var/run/cr_node${1}.pid"
   kill -TERM "$(cat "$PIDFILE")" && rm -f "$PIDFILE"
 }
 

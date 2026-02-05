@@ -7,7 +7,7 @@ fi
 # Zsh-only behavior (completion, zle, etc.)
 if [[ -n "$ZSH_VERSION" ]]; then
   if type brew &>/dev/null; then
-    BREW_PREFIX="$(brew --prefix)"
+    export BREW_PREFIX="$(brew --prefix)"
     eval "$(${BREW_PREFIX}/bin/brew shellenv)"
     FPATH="${BREW_PREFIX}/share/zsh/site-functions:${FPATH}"
   fi
