@@ -7,7 +7,9 @@ fi
 # Zsh-only behavior (completion, zle, etc.)
 if [[ -n "$ZSH_VERSION" ]]; then
   if type brew &>/dev/null; then
-    eval $($(brew --prefix)/bin/brew shellenv)
+    BREW_PREFIX="$(brew --prefix)"
+    eval "$(${BREW_PREFIX}/bin/brew shellenv)"
+    FPATH="${BREW_PREFIX}/share/zsh/site-functions:${FPATH}"
   fi
 
   autoload bashcompinit && bashcompinit
@@ -17,14 +19,14 @@ if [[ -n "$ZSH_VERSION" ]]; then
 
   zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
-  # 1password CLI completions
-  eval "$(op completion zsh)"; compdef _op op
+  # Lazy-load completions for faster startup
+  if command -v op &>/dev/null; then
+    eval "$(op completion zsh)"
+    compdef _op op
+  fi
 
-  [[ -s $(brew --prefix)/bin/aws_completer ]] && complete -C "$(brew --prefix)/bin/aws_completer" aws
-
-  # load completions from Homebrew
-  if type brew &>/dev/null; then
-    FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+  if [[ -n "$BREW_PREFIX" ]] && [[ -s "${BREW_PREFIX}/bin/aws_completer" ]]; then
+    complete -C "${BREW_PREFIX}/bin/aws_completer" aws
   fi
 
   set -o vi # turn on VIM keybindings in zsh
