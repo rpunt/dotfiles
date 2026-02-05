@@ -27,6 +27,15 @@ for file in "${DOTFILES_DIR}"/scripts/*.sh; do
   # Skip the os-specific loader
   [[ "$file" == */os_${OS_TYPE}.sh ]] && continue
 
+  # Skip SCM providers based on SCM_PROVIDER env var (default: github)
+  # Set SCM_PROVIDER="ado" in ~/.dotfiles_config for Azure DevOps, if appropriate
+  if [[ "$file" == */github.sh ]] && [[ "${SCM_PROVIDER:-github}" != "github" ]]; then
+    continue
+  fi
+  if [[ "$file" == */ado.sh ]] && [[ "${SCM_PROVIDER:-github}" != "ado" ]]; then
+    continue
+  fi
+
   [[ -f "$file" ]] || continue
   [[ -r "$file" ]] || continue
 

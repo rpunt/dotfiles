@@ -1,5 +1,8 @@
 export DOTFILES_DIR="${DOTFILES_DIR:-${${(%):-%x}:A:h}}" # set DOTFILES_DIR to the directory of this file if not already set
 
+# Load early config (e.g., SCM_PROVIDER="ado" for Azure DevOps laptops)
+test -f ~/.dotfiles_config && source ~/.dotfiles_config
+
 if [[ -f "${DOTFILES_DIR}/scripts/common.sh" ]]; then
   source "${DOTFILES_DIR}/scripts/common.sh"
 fi
@@ -34,5 +37,5 @@ if [[ -n "$ZSH_VERSION" ]]; then
 
 fi
 
-# place any private configs in ~/.local_profile_overrides
+# place any private configs/overrides in ~/.local_profile_overrides
 test -f ~/.local_profile_overrides && source ~/.local_profile_overrides

@@ -1,7 +1,10 @@
 # stop bash deprecation warnings
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
-export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dev/dotfiles}"
+export DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+
+# Load early config (e.g., SCM_PROVIDER="ado" for Azure DevOps laptops)
+test -f ~/.dotfiles_config && source ~/.dotfiles_config
 
 # shellcheck source=/dev/null
 if [[ -f "${DOTFILES_DIR}/scripts/common.sh" ]]; then
