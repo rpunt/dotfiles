@@ -1,1 +1,0 @@
-litra_glow.sh

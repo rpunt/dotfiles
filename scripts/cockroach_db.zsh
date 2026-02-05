@@ -1,1 +1,0 @@
-cockroach_db.sh
