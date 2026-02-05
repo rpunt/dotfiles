@@ -1,4 +1,4 @@
-export DOTFILES_DIR="${DOTFILES_DIR:-${${(%):-%x}:a:h}}" # set DOTFILES_DIR to the directory of this file if not already set
+export DOTFILES_DIR="${DOTFILES_DIR:-${${(%):-%x}:A:h}}" # set DOTFILES_DIR to the directory of this file if not already set
 
 if [[ -f "${DOTFILES_DIR}/scripts/common.sh" ]]; then
   source "${DOTFILES_DIR}/scripts/common.sh"
