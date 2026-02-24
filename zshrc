@@ -23,10 +23,12 @@ if [[ -n "$ZSH_VERSION" ]]; then
   zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
   # Lazy-load completions for faster startup
-  if command -v op &>/dev/null; then
-    eval "$(op completion zsh)"
-    compdef _op op
-  fi
+  for bin in op roachdev roachprod workload-analyzer; do
+    if command -v "$bin" &>/dev/null; then
+      eval "$($bin completion zsh)"
+      compdef "_$bin" "$bin"
+    fi
+  done
 
   if [[ -n "$BREW_PREFIX" ]] && [[ -s "${BREW_PREFIX}/bin/aws_completer" ]]; then
     complete -C "${BREW_PREFIX}/bin/aws_completer" aws
