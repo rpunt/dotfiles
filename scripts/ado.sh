@@ -27,7 +27,10 @@ function check_pr_checks() {
   fi
 
   local failed_count
-  failed_count=$(az repos pr policy list --id "$1" -o json | jq '[.[] | select(.isBlocking == true and .status != "approved")] | length')
+  if ! failed_count=$(az repos pr policy list --id "$1" -o json | jq '[.[] | select(.isBlocking == true and .status != "approved")] | length'); then
+    echo "Error: Failed to retrieve policy checks for PR $1" >&2
+    return 1
+  fi
   return $(( failed_count > 0 ? 1 : 0 ))
 }
 
@@ -318,6 +321,7 @@ function approve_list() {
 
   echo "${cyan}Processing PRs from $sourcefile...${reset}"
   for pr in $(cat "$sourcefile"); do
+    local number
     number=$(echo "$pr" | grep -o '[0-9]\+')
     review_pr "$number"
   done

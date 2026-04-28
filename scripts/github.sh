@@ -318,6 +318,7 @@ function approve_list() {
 
   echo "${cyan}Processing PRs from $sourcefile...${reset}"
   for pr in $(cat "$sourcefile"); do
+    local number
     number=$(echo "$pr" | grep -o '[0-9]\+')
     review_pr "$number"
   done

@@ -25,7 +25,11 @@ function check_pr_approvers {
 
 function check_pr_checks {
   param([Parameter(Mandatory)][int]$PullRequestId)
-  $policies = az repos pr policy list --id $PullRequestId | ConvertFrom-Json
+  $policiesJson = az repos pr policy list --id $PullRequestId
+  if ($LASTEXITCODE -ne 0) {
+    throw "Failed to retrieve policy checks for PR #$PullRequestId."
+  }
+  $policies = $policiesJson | ConvertFrom-Json
   $failed = @($policies | Where-Object { $_.isBlocking -and $_.status -ne 'approved' })
   return ($failed.Count -eq 0)
 }
