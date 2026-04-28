@@ -22,11 +22,18 @@ if [[ -n "$ZSH_VERSION" ]]; then
 
   zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
-  # Lazy-load completions for faster startup
-  for bin in op roachdev roachprod workload-analyzer; do
+  # Cache completions for faster startup
+  local cache_dir="${HOME}/.cache/zsh-completions"
+  [[ -d "$cache_dir" ]] || mkdir -p "$cache_dir"
+  for bin in op roachdev roachprod workload-analyzer workload-exporter; do
     if command -v "$bin" &>/dev/null; then
-      eval "$($bin completion zsh)"
-      compdef "_$bin" "$bin"
+      local bin_path="$(command -v "$bin")"
+      local cache_file="${cache_dir}/_${bin}"
+      if [[ ! -f "$cache_file" || "$bin_path" -nt "$cache_file" ]]; then
+        "$bin" completion zsh > "$cache_file" 2>/dev/null
+      fi
+      source "$cache_file"
+      compdef "_${bin}" "$bin"
     fi
   done
 
