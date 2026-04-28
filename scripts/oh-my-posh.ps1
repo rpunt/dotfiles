@@ -22,42 +22,50 @@ if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
   }
 } else {
   function Get-GitInfo {
-      try {
-          $branch = git rev-parse --abbrev-ref HEAD 2>$null
-          if (-not $branch) { return "" }
+    try {
+      $branch = git rev-parse --abbrev-ref HEAD 2>$null
+      if (-not $branch) { return $null }
 
-          # Detect dirty state
-          $status = git status --porcelain 2>$null
-          $dirty = if ($status) { "*" } else { "" }
+      $status = git status --porcelain 2>$null
+      $dirty = if ($status) { "*" } else { "" }
 
-          return " ($branch$dirty)"
-      } catch {
-          return ""
+      return @{
+        Branch = $branch.Trim()
+        Dirty  = $dirty
       }
+    }
+    catch {
+      return $null
+    }
   }
 
   function prompt {
-      $time   = Get-Date -Format "HH:mm:ss"
-      $path   = Get-Location
-      $git    = Get-GitInfo
-      $ok     = $?
+    # $ok = $?
 
-      $statusSymbol = if ($ok) { "✔" } else { "✘" }
-      $statusColor  = if ($ok) { "Green" } else { "Red" }
+    # $time = Get-Date -Format "HH:mm:ss"
+    $path = (Get-Location).Path.Replace($HOME, "~")
+    $git = Get-GitInfo
 
-      # # Line 1: time + status
-      # Write-Host "$time " -NoNewline -ForegroundColor DarkGray
-      # Write-Host $statusSymbol -NoNewline -ForegroundColor $statusColor
-      # Write-Host ""
+    # $statusText = if ($ok) { "[OK]" } else { "[ERR]" }
+    # $statusColor = if ($ok) { "Green" } else { "Red" }
 
-      # Line 2: path + git
-      Write-Host $path -NoNewline -ForegroundColor Cyan
-      if ($git) {
-          Write-Host $git -NoNewline -ForegroundColor Magenta
-      }
-      Write-Host ""
+    # Write-Host "+--------------------------------------------------" -ForegroundColor DarkGray
 
-      # Line 3: prompt symbol
-      return "➜ "
+    # Write-Host "|" -NoNewline -ForegroundColor DarkGray
+    # Write-Host " $time " -NoNewline -ForegroundColor Yellow
+    Write-Host "$path" -NoNewline -ForegroundColor Cyan
+
+    if ($git) {
+      Write-Host "  git:" -NoNewline -ForegroundColor DarkGray
+      Write-Host " $($git.Branch)$($git.Dirty)" -NoNewline -ForegroundColor Magenta
+    }
+
+    Write-Host ""
+
+    # Write-Host "|" -NoNewline -ForegroundColor DarkGray
+    # Write-Host " $path" -ForegroundColor Cyan
+
+    # Write-Host "+--------------------------------------------------" -ForegroundColor DarkGray
+    return "> "
   }
 }
