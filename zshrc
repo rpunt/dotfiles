@@ -25,7 +25,7 @@ if [[ -n "$ZSH_VERSION" ]]; then
   # Cache completions for faster startup
   local cache_dir="${HOME}/.cache/zsh-completions"
   [[ -d "$cache_dir" ]] || mkdir -p "$cache_dir"
-  for bin in op roachdev roachprod workload-analyzer; do
+  for bin in op roachdev roachprod workload-analyzer workload-exporter; do
     if command -v "$bin" &>/dev/null; then
       local bin_path="$(command -v "$bin")"
       local cache_file="${cache_dir}/_${bin}"
