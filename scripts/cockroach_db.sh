@@ -19,8 +19,8 @@ function cr_start_node() {
     return 1
   fi
 
-  listen_addr=$(echo $node | jq --arg nodenumber "$1" '. | .[$nodenumber] | .listen_addr')
-  http_addr=$(echo $node | jq --arg nodenumber "$1" '. | .[$nodenumber] | .http_addr')
+  listen_addr=$(echo "$node" | jq --arg nodenumber "$1" '. | .[$nodenumber] | .listen_addr')
+  http_addr=$(echo "$node" | jq --arg nodenumber "$1" '. | .[$nodenumber] | .http_addr')
   cockroach start \
     --insecure \
     --store="${BREW_PREFIX:-$(brew --prefix)}/var/cockroach/node${1}" \

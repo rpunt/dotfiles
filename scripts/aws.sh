@@ -1,13 +1,13 @@
 get_id() {
-    input=$@
+    input="$1"
     instance=$(aws ec2 describe-instances \
       --output json \
       --region us-west-2 \
       --filter "Name=private-ip-address,Values=$input" \
       --query 'Reservations[].Instances[]' | jq '.[0]')
-    instance_id=$(echo $instance | jq -r '.InstanceId')
-    crdb_cluster_name=$(echo $instance | jq -r '.Tags[] | select(.Key == "crdb_cluster_name") | .Value')
-    node_id=$(echo $instance | jq -r '.Tags[] | select(.Key == "node_id") | .Value')
+    instance_id=$(echo "$instance" | jq -r '.InstanceId')
+    crdb_cluster_name=$(echo "$instance" | jq -r '.Tags[] | select(.Key == "crdb_cluster_name") | .Value')
+    node_id=$(echo "$instance" | jq -r '.Tags[] | select(.Key == "node_id") | .Value')
     jq -n \
       --arg instance_id "$instance_id" \
       --arg crdb_cluster_name "$crdb_cluster_name" \
@@ -16,15 +16,15 @@ get_id() {
 }
 
 get_ip() {
-    input=$@
+    input="$1"
     instance=$(aws ec2 describe-instances \
       --output json \
       --region us-west-2 \
       --filter "Name=instance-id,Values=$input" \
       --query 'Reservations[].Instances[]' | jq '.[0]')
-    private_ip=$(echo $instance | jq -r '.NetworkInterfaces[].PrivateIpAddress')
-    crdb_cluster_name=$(echo $instance | jq -r '.Tags[] | select(.Key == "crdb_cluster_name") | .Value')
-    node_id=$(echo $instance | jq -r '.Tags[] | select(.Key == "node_id") | .Value')
+    private_ip=$(echo "$instance" | jq -r '.NetworkInterfaces[].PrivateIpAddress')
+    crdb_cluster_name=$(echo "$instance" | jq -r '.Tags[] | select(.Key == "crdb_cluster_name") | .Value')
+    node_id=$(echo "$instance" | jq -r '.Tags[] | select(.Key == "node_id") | .Value')
     jq -n \
       --arg private_ip "$private_ip" \
       --arg crdb_cluster_name "$crdb_cluster_name" \

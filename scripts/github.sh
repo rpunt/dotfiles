@@ -6,14 +6,9 @@ function check_pr_approved() {
     return 1
   fi
 
-  # Check if PR exists first
-  if ! gh pr view "$1" &>/dev/null; then
-    echo "Error: PR #$1 not found" >&2
-    return 1
-  fi
-
-  local approved_count=$(gh pr view "$1" --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
-  echo $approved_count
+  local approved_count
+  approved_count=$(gh pr view "$1" --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
+  echo "$approved_count"
 }
 
 function check_pr_approvers() {
@@ -38,8 +33,7 @@ function check_pr_checks() {
   fi
 
   gh pr checks "$1" --required 1>/dev/null 2>&1
-  rc=$?
-  return $rc
+  return $?
 }
 
 function check_pr_failed_checks() {
@@ -61,7 +55,12 @@ function check_pr_merge_state() {
 }
 
 function check_pr_is_merged() {
-  gh pr view $1 --json state --jq '.state'
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
+
+  gh pr view "$1" --json state --jq '.state'
 }
 
 function merge_mine() {
@@ -258,24 +257,24 @@ function review_pr() {
 
   local pr="$1"
 
-  # Check if PR exists first
-  if ! gh pr view "$pr" &>/dev/null; then
+  local pr_json
+  pr_json=$(gh pr view "$pr" --json title,author 2>/dev/null)
+  if [ -z "$pr_json" ]; then
     echo "${red}Error: PR #$pr not found${reset}" >&2
     return 1
   fi
 
-  # if the pr is approved, skip it
-  local approved=$(check_pr_approved $pr)
+  local approved
+  approved=$(check_pr_approved "$pr")
   if [[ $approved -gt 0 ]]; then
     echo "${yellow}PR $pr is already approved by $approved reviewer(s), skipping.${reset}"
     return 0
   fi
 
-  # Get PR title to show with the prompt
-  local title=$(gh pr view "$pr" --json title --jq '.title')
-  local author=$(gh pr view "$pr" --json author --jq '.author.login')
+  local title author
+  title=$(echo "$pr_json" | jq -r '.title')
+  author=$(echo "$pr_json" | jq -r '.author.login')
 
-  # view the PR in terminal
   echo "${cyan}Reviewing PR #$pr by $author: $title${reset}"
   gh pr view --comments $pr
 
@@ -319,13 +318,15 @@ function approve_list() {
 
   echo "${cyan}Processing PRs from $sourcefile...${reset}"
   for pr in $(cat "$sourcefile"); do
-    number=$(echo $pr | grep -o '[0-9]\+')
-    review_pr $number
+    local number
+    number=$(echo "$pr" | grep -o '[0-9]\+')
+    review_pr "$number"
   done
   echo "${green}All PRs from $sourcefile processed!${reset}"
 }
 
 function approve_for() {
+  local username
   case $1 in
     "shamer")
       username="shamer-dd"

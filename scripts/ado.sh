@@ -1,73 +1,64 @@
 # ADO PR automation functions
 
 function check_pr_approved() {
-  # if [ -z "$1" ]; then
-  #   echo "Error: PR number is required" >&2
-  #   return 1
-  # fi
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
 
-  # # Check if PR exists first
-  # if ! gh pr view "$1" &>/dev/null; then
-  #   echo "Error: PR #$1 not found" >&2
-  #   return 1
-  # fi
-
-  # local approved_count=$(gh pr view "$1" --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | length')
-  # echo $approved_count
-  echo "using ADO"
+  local approved_count
+  approved_count=$(az repos pr reviewer list --id "$1" -o json | jq '[.[] | select(.vote == 10)] | length')
+  echo "$approved_count"
 }
 
 function check_pr_approvers() {
-  # if [ -z "$1" ]; then
-  #   echo "Error: PR number is required" >&2
-  #   return 1
-  # fi
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
 
-  # gh pr view "$1" --json reviews --jq '.reviews | map(select(.state == "APPROVED")) | .[].author.login' 2>/dev/null
-  echo "using ADO"
+  az repos pr reviewer list --id "$1" -o json | jq -r '.[] | select(.vote == 10) | .displayName'
 }
 
 function check_pr_checks() {
-  # if [ -z "$1" ]; then
-  #   echo "Error: PR number is required" >&2
-  #   return 1
-  # fi
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
 
-  # # Check if PR exists first
-  # if ! gh pr view "$1" &>/dev/null; then
-  #   echo "Error: PR #$1 not found" >&2
-  #   return 1
-  # fi
-
-  # gh pr checks "$1" --required 1>/dev/null 2>&1
-  # rc=$?
-  # return $rc
-  echo "using ADO"
+  local failed_count
+  if ! failed_count=$(az repos pr policy list --id "$1" -o json | jq '[.[] | select(.isBlocking == true and .status != "approved")] | length'); then
+    echo "Error: Failed to retrieve policy checks for PR $1" >&2
+    return 1
+  fi
+  return $(( failed_count > 0 ? 1 : 0 ))
 }
 
 function check_pr_failed_checks() {
-  # if [ -z "$1" ]; then
-  #   echo "Error: PR number is required" >&2
-  #   return 1
-  # fi
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
 
-  # gh pr view "$1" --json statusCheckRollup --jq '.statusCheckRollup[] | select(.state != "SUCCESS" and .state != null) | {context: .context, state: .state, targetUrl: .targetUrl}'
-  echo "using ADO"
+  az repos pr policy list --id "$1" -o json | jq '.[] | select(.status != "approved") | {policy: .configuration.type.displayName, status: .status}'
 }
 
 function check_pr_merge_state() {
-  # if [ -z "$1" ]; then
-  #   echo "Error: PR number is required" >&2
-  #   return 1
-  # fi
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
 
-  # gh pr view "$1" --json mergeStateStatus --jq '.mergeStateStatus'
-  echo "using ADO"
+  az repos pr show --id "$1" -o json | jq -r '.mergeStatus'
 }
 
 function check_pr_is_merged() {
-  # gh pr view $1 --json state --jq '.state'
-  echo "using ADO"
+  if [ -z "$1" ]; then
+    echo "Error: PR number is required" >&2
+    return 1
+  fi
+
+  az repos pr show --id "$1" -o json | jq -r '.status'
 }
 
 function merge_mine() {
@@ -257,105 +248,107 @@ function hammer_away() {
 }
 
 function review_pr() {
-  # colors
+  colors
 
-  # if [ -z "$1" ]; then
-  #   echo "${red}Error: PR number is required${reset}" >&2
-  #   return 1
-  # fi
+  if [ -z "$1" ]; then
+    echo "${red}Error: PR number is required${reset}" >&2
+    return 1
+  fi
 
-  # local pr="$1"
+  local pr="$1"
 
-  # # Check if PR exists first
-  # if ! gh pr view "$pr" &>/dev/null; then
-  #   echo "${red}Error: PR #$pr not found${reset}" >&2
-  #   return 1
-  # fi
+  local pr_json
+  pr_json=$(az repos pr show --id "$pr" -o json 2>/dev/null)
+  if [ -z "$pr_json" ]; then
+    echo "${red}Error: PR #$pr not found${reset}" >&2
+    return 1
+  fi
 
-  # # if the pr is approved, skip it
-  # local approved=$(check_pr_approved $pr)
-  # if [[ $approved -gt 0 ]]; then
-  #   echo "${yellow}PR $pr is already approved by $approved reviewer(s), skipping.${reset}"
-  #   return 0
-  # fi
+  local approved
+  approved=$(check_pr_approved "$pr")
+  if [[ $approved -gt 0 ]]; then
+    echo "${yellow}PR $pr is already approved by $approved reviewer(s), skipping.${reset}"
+    return 0
+  fi
 
-  # # Get PR title to show with the prompt
-  # local title=$(gh pr view "$pr" --json title --jq '.title')
-  # local author=$(gh pr view "$pr" --json author --jq '.author.login')
+  local title author
+  title=$(echo "$pr_json" | jq -r '.title')
+  author=$(echo "$pr_json" | jq -r '.createdBy.displayName')
 
-  # # view the PR in terminal
-  # echo "${cyan}Reviewing PR #$pr by $author: $title${reset}"
-  # gh pr view --comments $pr
+  echo "${cyan}Reviewing PR #$pr by $author: $title${reset}"
+  az repos pr show --id "$pr"
 
-  # # Show the diff if requested
-  # echo -n "${cyan}Do you want to see the diff? (y/n) ${reset}"
-  # read show_diff
-  # show_diff=$(echo "$show_diff" | tr '[:upper:]' '[:lower:]')
+  echo -n "${cyan}Do you want to see the diff? (y/n) ${reset}"
+  read show_diff
+  show_diff=$(echo "$show_diff" | tr '[:upper:]' '[:lower:]')
 
-  # if [[ $show_diff == "y" ]]; then
-  #   gh pr diff $pr | less
-  # fi
+  if [[ $show_diff == "y" ]]; then
+    local target source
+    target=$(echo "$pr_json" | jq -r '.targetRefName | sub("^refs/heads/"; "")')
+    source=$(echo "$pr_json" | jq -r '.sourceRefName | sub("^refs/heads/"; "")')
+    git diff "origin/$target...origin/$source" | less
+  fi
 
-  # # prompt for approval; if I approve, merge the PR
-  # echo -n "${green}Do you approve PR $pr? (y/n/s for skip) ${reset}"
-  # read approve
-  # approve=$(echo "$approve" | tr '[:upper:]' '[:lower:]')
+  echo -n "${green}Do you approve PR $pr? (y/n/s for skip) ${reset}"
+  read approve
+  approve=$(echo "$approve" | tr '[:upper:]' '[:lower:]')
 
-  # if [[ $approve == "y" ]]; then
-  #   echo "${cyan}Approving PR #$pr...${reset}"
-  #   gh pr review -a $pr
-  #   echo "${green}PR #$pr approved!${reset}"
-  # elif [[ $approve == "s" ]]; then
-  #   echo "${yellow}Skipping PR #$pr${reset}"
-  # else
-  #   echo "${red}PR #$pr not approved${reset}"
-  # fi
-  echo "using ADO"
+  if [[ $approve == "y" ]]; then
+    echo "${cyan}Approving PR #$pr...${reset}"
+    az repos pr set-vote --id "$pr" --vote approve
+    echo "${green}PR #$pr approved!${reset}"
+  elif [[ $approve == "s" ]]; then
+    echo "${yellow}Skipping PR #$pr${reset}"
+  else
+    echo "${red}PR #$pr not approved${reset}"
+  fi
 }
 
 function approve_list() {
-  # if [ -z "$1" ]; then
-  #   echo "${red}Error: Source file is required${reset}" >&2
-  #   return 1
-  # fi
+  colors
 
-  # local sourcefile="$1"
+  if [ -z "$1" ]; then
+    echo "${red}Error: Source file is required${reset}" >&2
+    return 1
+  fi
 
-  # if [ ! -f "$sourcefile" ]; then
-  #   echo "${red}Error: File '$sourcefile' not found${reset}" >&2
-  #   return 1
-  # fi
+  local sourcefile="$1"
 
-  # echo "${cyan}Processing PRs from $sourcefile...${reset}"
-  # for pr in $(cat "$sourcefile"); do
-  #   number=$(echo $pr | grep -o '[0-9]\+')
-  #   review_pr $number
-  # done
-  # echo "${green}All PRs from $sourcefile processed!${reset}"
-  echo "using ADO"
+  if [ ! -f "$sourcefile" ]; then
+    echo "${red}Error: File '$sourcefile' not found${reset}" >&2
+    return 1
+  fi
+
+  echo "${cyan}Processing PRs from $sourcefile...${reset}"
+  for pr in $(cat "$sourcefile"); do
+    local number
+    number=$(echo "$pr" | grep -o '[0-9]\+')
+    review_pr "$number"
+  done
+  echo "${green}All PRs from $sourcefile processed!${reset}"
 }
 
 function approve_for() {
-  # case $1 in
-  #   "shamer")
-  #     username="shamer-dd"
-  #     ;;
-  #   "rpunt")
-  #     username="dd-rpunt"
-  #     ;;
-  #   "jloar")
-  #     username="dd-jloar"
-  #     ;;
-  #   "bkwon")
-  #     username="bryankwon-doordash"
-  #     ;;
-  #   *)
-  #     echo "Unknown user: $1"
-  #     return 1
-  #     ;;
-  # esac
-  # for pr in $(gh pr list -A "$username" --json number,isDraft --jq '.[] | select(.isDraft == false) | .number'); do
-  #   review_pr $pr
-  # done
-  echo "using ADO"
+  local username
+  case $1 in
+    "shamer")
+      username="shamer-dd"
+      ;;
+    "rpunt")
+      username="dd-rpunt"
+      ;;
+    "jloar")
+      username="dd-jloar"
+      ;;
+    "bkwon")
+      username="bryankwon-doordash"
+      ;;
+    *)
+      echo "Unknown user: $1"
+      return 1
+      ;;
+  esac
+  for pr in $(az repos pr list --creator "$username" -o json | jq -r '.[] | select(.isDraft == false) | .pullRequestId'); do
+    review_pr "$pr"
+  done
 }
