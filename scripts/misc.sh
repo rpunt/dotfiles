@@ -24,15 +24,10 @@ function weather() {
   curl wttr.in/"${1:-55328}"
 }
 
-# export ENABLE_FAST_GIT_PROMPT=0         # faster - don't use with ENABLE_GIT_PROMPT
-# if [ "$ENABLE_FAST_GIT_PROMPT" = 1 ]; then
-#   source "${HOME}/.git_bash_prompt"
-# fi
-
 function getaocinputs() {
   curl "https://adventofcode.com/$(date +%Y)/day/$(date +%-d)/input" --cookie "session=$(cat ~/.config/aoc/token)"
 }
 
 function sgrep() {
- grep -ir --exclude-dir="tfstate_backups" $1 | grep service_name
+ grep -ir --exclude-dir="tfstate_backups" "$1" | grep service_name
 }
