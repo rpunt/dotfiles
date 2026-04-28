@@ -15,6 +15,7 @@ CI runs markdownlint on push/PR to main. Lint config is in `.mdlrc`.
 **Entry points:** `bashrc`, `zshrc`, `profile.ps1` — each sets `DOTFILES_DIR` and loads shared scripts.
 
 **Loading order (bash/zsh):**
+
 1. `~/.dotfiles_config` (optional early config, e.g. `SCM_PROVIDER="ado"`)
 2. `scripts/common.sh` — detects OS, sources `os_{macos,linux}.sh`, then loads all `scripts/*.sh`
 3. `scripts/path.sh` is loaded first (before other scripts)
