@@ -17,10 +17,10 @@ CI runs markdownlint on push/PR to main. Lint config is in `.mdlrc`.
 **Loading order (bash/zsh):**
 
 1. `~/.dotfiles_config` (optional early config, e.g. `SCM_PROVIDER="ado"`)
-2. `scripts/common.sh` — detects OS, sources `os_{macos,linux}.sh`, then loads all `scripts/*.sh`
-3. `scripts/path.sh` is loaded first (before other scripts)
-4. `scripts/github.sh` vs `scripts/ado.sh` — only one is loaded, controlled by `SCM_PROVIDER` env var (defaults to `github`)
-5. `~/.local_profile_overrides` (optional per-machine overrides, sourced last)
+1. `scripts/common.sh` — detects OS, sources `os_{macos,linux}.sh`, then loads all `scripts/*.sh`
+1. `scripts/path.sh` is loaded first (before other scripts)
+1. `scripts/github.sh` vs `scripts/ado.sh` — only one is loaded, controlled by `SCM_PROVIDER` env var (defaults to `github`)
+1. `~/.local_profile_overrides` (optional per-machine overrides, sourced last)
 
 **PowerShell:** `profile.ps1` dot-sources all `scripts/*.ps1` files. PowerShell scripts (`*.ps1`) and shell scripts (`*.sh`) coexist in `scripts/` — some features have parallel implementations (e.g. `ado.sh`/`ado.ps1`, `oh-my-posh.sh`/`oh-my-posh.ps1`).
 
