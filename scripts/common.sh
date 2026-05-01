@@ -35,6 +35,10 @@ for file in "${DOTFILES_DIR}"/scripts/*.sh; do
   if [[ "$file" == */ado.sh ]] && [[ "${SCM_PROVIDER:-github}" != "ado" ]]; then
     continue
   fi
+  if [[ "$file" == */git-pat.sh ]] && [[ "${SCM_PROVIDER:-github}" != "ado" ]]; then
+    continue
+  fi
+
 
   [[ -f "$file" ]] || continue
   [[ -r "$file" ]] || continue
