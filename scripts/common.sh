@@ -24,8 +24,8 @@ for file in "${DOTFILES_DIR}"/scripts/*.sh; do
   [[ "$file" == */path.sh ]] && continue
   # Skip this loader itself if you put it under scripts/
   [[ "$file" == */common.sh ]] && continue
-  # Skip the os-specific loader
-  [[ "$file" == */os_${OS_TYPE}.sh ]] && continue
+  # Skip all os-specific files (already handled above)
+  [[ "$file" == */os_*.sh ]] && continue
 
   # Skip SCM providers based on SCM_PROVIDER env var (default: github)
   # Set SCM_PROVIDER="ado" in ~/.dotfiles_config for Azure DevOps, if appropriate
