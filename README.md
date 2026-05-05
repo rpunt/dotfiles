@@ -33,6 +33,15 @@ New-Item @symlinkParams
 
 Close all terminals, and any new terminals will reflect the settings in this repo
 
+## Configuration
+
+Optional variables can be set in `~/.dotfiles_config` (sourced early, before everything else):
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `SCM_PROVIDER` | `github` | Set to `ado` to load Azure DevOps helpers instead of GitHub helpers |
+| `GIT_AUTH_PAT` | `false` | Set to `true` to enable PAT-based git authentication (prompts for a PAT on first git operation and injects it as an HTTP header) |
+
 ## Package Specifics
 
 ### Oh-my-posh
