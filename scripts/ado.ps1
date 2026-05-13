@@ -1,5 +1,20 @@
 function azpr {
-  $pr = az repos pr create --auto-complete --delete-source-branch @args | ConvertFrom-Json
+  $output = az repos pr create --auto-complete --delete-source-branch @args 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    $currentBranch = git branch --show-current
+    $existing = az repos pr list --source-branch $currentBranch | ConvertFrom-Json
+    if ($existing.Count -gt 0) {
+      $pr = $existing[0]
+      $url = "$($pr.repository.webUrl)/pullrequest/$($pr.pullRequestId)"
+      $url | Set-Clipboard
+      Write-Host "Existing PR URL copied to clipboard:"
+      $url
+      return
+    }
+    Write-Host $output -ForegroundColor Red
+    return
+  }
+  $pr = $output | ConvertFrom-Json
   $url = "$($pr.repository.webUrl)/pullrequest/$($pr.pullRequestId)"
 
   $url | Set-Clipboard
