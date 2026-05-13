@@ -4,7 +4,7 @@ function azpr {
     $currentBranch = git branch --show-current
     $existing = az repos pr list --source-branch $currentBranch | ConvertFrom-Json
     if ($existing.Count -gt 0) {
-      $pr = $existing[0]
+      $pr = az repos pr show --id $existing[0].pullRequestId | ConvertFrom-Json
       $url = "$($pr.repository.webUrl)/pullrequest/$($pr.pullRequestId)"
       $url | Set-Clipboard
       Write-Host "Existing PR URL copied to clipboard:"
