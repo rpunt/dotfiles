@@ -7,23 +7,35 @@ function azpr {
       $pr = az repos pr show --id $existing[0].pullRequestId | ConvertFrom-Json
       $url = "$($pr.repository.webUrl)/pullrequest/$($pr.pullRequestId)"
       $url | Set-Clipboard
-      Write-Host "Existing PR URL copied to clipboard:"
-      $url
+      Write-Host "PR #$($pr.pullRequestId) already exists. URL copied to clipboard:" -ForegroundColor Yellow
+      Write-Host $url
       return
     }
-    Write-Host $output -ForegroundColor Red
+    Write-Host "Failed to create PR:" -ForegroundColor Red
+    Write-Host ($output -join "`n") -ForegroundColor Red
     return
   }
   $pr = $output | ConvertFrom-Json
   $url = "$($pr.repository.webUrl)/pullrequest/$($pr.pullRequestId)"
 
   $url | Set-Clipboard
-  Write-Host "PR URL copied to clipboard:"
-  $url
+  Write-Host "PR #$($pr.pullRequestId) created. URL copied to clipboard:" -ForegroundColor Green
+  Write-Host $url
 }
 
 function prlist {
-  $(az repos pr list) | ConvertFrom-Json | Select-Object @{Name = 'ID'; Expression = { $_.pullRequestId } }, @{Name = 'Title'; Expression = { $_.title } } | Format-Table
+  $prs = az repos pr list | ConvertFrom-Json
+  if (-not $prs -or $prs.Count -eq 0) {
+    Write-Host "No open PRs found." -ForegroundColor Yellow
+    return
+  }
+  $prs | Select-Object `
+    @{Name = 'ID'; Expression = { $_.pullRequestId } }, `
+    @{Name = 'Title'; Expression = { $_.title } }, `
+    @{Name = 'Author'; Expression = { $_.createdBy.displayName } }, `
+    @{Name = 'Branch'; Expression = { ($_.sourceRefName -replace '^refs/heads/', '') + ' -> ' + ($_.targetRefName -replace '^refs/heads/', '') } }, `
+    @{Name = 'Draft'; Expression = { if ($_.isDraft) { 'yes' } else { '' } } } |
+    Format-Table -AutoSize
 }
 
 function check_pr_approved {
@@ -87,20 +99,35 @@ function review_pr {
     return
   }
 
-  Write-Host "Reviewing PR #$PullRequestId by $($pr.createdBy.displayName): $($pr.title)" -ForegroundColor Cyan
-  az repos pr show --id $PullRequestId
+  $target = $pr.targetRefName -replace '^refs/heads/', ''
+  $source = $pr.sourceRefName -replace '^refs/heads/', ''
+
+  Write-Host ""
+  Write-Host "PR #$PullRequestId" -ForegroundColor Cyan -NoNewline
+  Write-Host "  $($pr.title)"
+  Write-Host "  Author: $($pr.createdBy.displayName)"
+  Write-Host "  Repo:   $($pr.repository.name)"
+  Write-Host "  Branch: $source -> $target"
+  if ($pr.isDraft) { Write-Host "  Draft:  yes" -ForegroundColor Yellow }
+  if ($pr.description) {
+    Write-Host "  Description:"
+    $pr.description -split "`n" | ForEach-Object { Write-Host "    $_" }
+  }
+  $reviewerNames = @($pr.reviewers | ForEach-Object { $_.displayName })
+  if ($reviewerNames.Count -gt 0) {
+    Write-Host "  Reviewers: $($reviewerNames -join ', ')"
+  }
+  Write-Host ""
 
   $showDiff = (Read-Host "Do you want to see the diff? (y/n)").ToLower()
   if ($showDiff -eq 'y') {
-    $target = $pr.targetRefName -replace '^refs/heads/', ''
-    $source = $pr.sourceRefName -replace '^refs/heads/', ''
     git diff "origin/$target...origin/$source"
   }
 
   $approve = (Read-Host "Do you approve PR ${PullRequestId}? (y/n/s for skip)").ToLower()
   if ($approve -eq 'y') {
     Write-Host "Approving PR #$PullRequestId..." -ForegroundColor Cyan
-    az repos pr set-vote --id $PullRequestId --vote approve
+    az repos pr set-vote --id $PullRequestId --vote approve | Out-Null
     Write-Host "PR #$PullRequestId approved!" -ForegroundColor Green
   }
   elseif ($approve -eq 's') {
@@ -154,9 +181,10 @@ function prbrowse {
   $prs = $(az repos pr list --source-branch $currentBranch) | ConvertFrom-Json
   if ($prs.Count -gt 0) {
     $pr = $prs[0]
+    Write-Host "Opening PR #$($pr.pullRequestId) in browser..." -ForegroundColor Cyan
     az repos pr show --id $pr.pullRequestId --open | Out-Null
   }
   else {
-    Write-Host "No PR found for branch: $currentBranch"
+    Write-Host "No PR found for branch: $currentBranch" -ForegroundColor Yellow
   }
 }
