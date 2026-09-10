@@ -29,5 +29,7 @@ function getaocinputs() {
 }
 
 function sgrep() {
- grep -ir --exclude-dir="tfstate_backups" "$1" | grep service_name
+  grep -ir --exclude-dir="tfstate_backups" "$1" | grep service_name
 }
+
+function utcstamp() { date -u +%Y-%m-%dT%H:%M:%SZ; }
